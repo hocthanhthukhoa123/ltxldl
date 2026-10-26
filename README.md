@@ -47,6 +47,18 @@ Nhóm thay các mục TODO bằng hướng dẫn đã kiểm thử trên bản c
 - **Một lệnh chạy toàn bộ pipeline, bao gồm LLM:** TODO.
 - **Các tệp kết quả để đối chiếu:** TODO — dữ liệu xử lý, QA, KPI, kết quả LLM, hình và báo cáo.
 
+## Báo cáo kiểm tra dữ liệu (check_<Mã dữ liệu>.csv)
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python src/download.py --config configs/cape_town.yaml       # tải 4 mốc vào data/raw/ (~360 MB)
+python src/qa.py --config configs/cape_town.yaml             # -> reports/check_DSE2049-C04-G04-cape-town.csv
+python src/check_answers.py --config configs/cape_town.yaml  # số liệu cho 5 câu hỏi + tự kiểm tra
+```
+
+Danh sách ID của nhóm (sheet «Phân công») nằm trong `data/samples/`.
+
 ## Lưu ý khi làm bài
 
 - Commit và push thường xuyên từ đầu kỳ.
