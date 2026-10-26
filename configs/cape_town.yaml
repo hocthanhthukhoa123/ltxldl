@@ -3,6 +3,10 @@ data_root: south-africa/wc/cape-town
 currency: ZAR
 snapshots: [2025-09-28, 2025-12-29, 2026-03-30, 2026-06-29]
 # Dữ liệu của nhóm theo sheet «Phân công» (mã DSE2049-C04-G04-cape-town)
+# src/fetch_ids.py tải sheet này và ghi 3 tệp ở dưới vào data/samples/
+assignment_sheet:
+  id: 1xaMiF78Ta90IWm2oHESKD35IHCGEcOMbGiYfUbmiwxA
+  tabs: {assignment: Phân công, listing: Listing, review: Review, areas: Vùng}
 ma_du_lieu: DSE2049-C04-G04-cape-town
 listing_ids: data/samples/listing_ids.csv      # 1.000 listing + analysis_area
 review_ids: data/samples/review_ids.csv        # 5.000 review; cột llm_sample (1.000), manual_label (100)
