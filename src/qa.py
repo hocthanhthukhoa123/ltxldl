@@ -4,6 +4,12 @@
 
 Output: reports/check_<ma_du_lieu>.csv  (4 rows, one per snapshot, 16 fields).
 Empty cells mean "not available" (NaN), e.g. when the download failed.
+
+All counts are computed AFTER filtering to the team's IDs (sheet «Phân công»):
+  listings  -> id in config `listing_ids` (1,000 per snapshot)
+  calendar  -> listing_id in config `listing_ids` (365,000 per snapshot)
+  reviews   -> id in config `review_ids` (5,000 per snapshot)
+Without those config keys the whole files are used.
 """
 import argparse
 import re
@@ -46,14 +52,26 @@ def to_price(series):
                          errors="coerce")
 
 
-def clean_listings(path):
-    """Read listings, drop duplicate ids, sort by id, make price numeric.
+def load_ids(cfg, key, column):
+    """Set of int IDs from the CSV named in the config, or None if the key is absent."""
+    if not cfg.get(key):
+        return None
+    ids = pd.read_csv(ROOT / cfg[key], dtype=str)[column]
+    return set(pd.to_numeric(ids, errors="raise").astype("int64"))
+
+
+def clean_listings(path, keep_ids=None):
+    """Read listings, keep only the team's ids, drop duplicate ids, sort by id, make price numeric.
     Returns (dataframe, number of columns, number of columns with >=90% NaN)."""
     df = pd.read_csv(path, low_memory=False)
     df["id"] = pd.to_numeric(df["id"], errors="coerce")
     df = df.dropna(subset=["id"]).astype({"id": "int64"})
+    if keep_ids is not None:
+        df = df[df["id"].isin(keep_ids)]
     df = df.drop_duplicates(subset="id").sort_values("id").reset_index(drop=True)
-    n_nan90 = int((df.isna().mean() >= 0.9).sum()) if len(df) else df.shape[1]
+    nan90 = df.columns[df.isna().mean() >= 0.9].tolist() if len(df) else list(df.columns)
+    n_nan90 = len(nan90)
+    print(f"  listings columns with >=90% NaN ({n_nan90}): {', '.join(nan90)}")
     n_cols = df.shape[1]
     if "price" in df.columns:
         df["price"] = to_price(df["price"])
@@ -62,12 +80,16 @@ def clean_listings(path):
     return df, n_cols, n_nan90
 
 
-def count_rows(path):
-    """Count data rows of a big csv.gz without loading it all."""
-    return sum(len(c) for c in pd.read_csv(path, usecols=["listing_id"], chunksize=CHUNK))
+def count_rows(path, column, keep_ids=None):
+    """Count data rows of a big csv.gz without loading it all (only rows whose `column` is in keep_ids)."""
+    total = 0
+    for chunk in pd.read_csv(path, usecols=[column], chunksize=CHUNK):
+        ids = pd.to_numeric(chunk[column], errors="coerce")
+        total += int(ids.isin(keep_ids).sum()) if keep_ids is not None else len(chunk)
+    return total
 
 
-def check_snapshot(cfg, code, index, snap, manifest):
+def check_snapshot(cfg, code, index, snap, manifest, listing_ids=None, review_ids=None):
     row = dict.fromkeys(FIELDS, "")
     row.update(ma_du_lieu=code, moc=index, ngay=snap, tai_ve_ok=download_status(cfg, snap, manifest))
     if row["tai_ve_ok"] != "co":
@@ -77,10 +99,10 @@ def check_snapshot(cfg, code, index, snap, manifest):
     for n in NEEDED:
         row[f"{n}_bytes"] = paths[n].stat().st_size
 
-    df, n_cols, n_nan90 = clean_listings(paths["listings"])
+    df, n_cols, n_nan90 = clean_listings(paths["listings"], listing_ids)
     row["listings_dong"] = len(df)
-    row["calendar_dong"] = count_rows(paths["calendar"])
-    row["reviews_dong"] = count_rows(paths["reviews"])
+    row["calendar_dong"] = count_rows(paths["calendar"], "listing_id", listing_ids)
+    row["reviews_dong"] = count_rows(paths["reviews"], "id", review_ids)
     row["so_cot_listings"] = n_cols
     row["so_cot_nan_90"] = n_nan90
 
@@ -99,10 +121,15 @@ def run(cfg, code=None):
     reports = ROOT / cfg.get("reports_dir", "reports")
     manifest = read_manifest(reports / "download_manifest.csv")
 
+    listing_ids = load_ids(cfg, "listing_ids", "listing_id")
+    review_ids = load_ids(cfg, "review_ids", "review_id")
+    if listing_ids is None:
+        print("note: no listing_ids in config -> using the whole files")
+
     rows = []
     for i, snap in enumerate(cfg["snapshots"], start=1):
         print(f"checking {snap} ...")
-        rows.append(check_snapshot(cfg, code, i, snap, manifest))
+        rows.append(check_snapshot(cfg, code, i, snap, manifest, listing_ids, review_ids))
 
     reports.mkdir(parents=True, exist_ok=True)
     out = reports / f"check_{code}.csv"

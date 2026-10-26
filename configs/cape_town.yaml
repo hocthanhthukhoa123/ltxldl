@@ -2,3 +2,8 @@ city: cape_town
 data_root: south-africa/wc/cape-town   
 currency: ZAR
 snapshots: [2025-09-28, 2025-12-29, 2026-03-30, 2026-06-29]
+# Dữ liệu của nhóm theo sheet «Phân công» (mã DSE2049-C04-G04-cape-town)
+ma_du_lieu: DSE2049-C04-G04-cape-town
+listing_ids: data/samples/listing_ids.csv      # 1.000 listing + analysis_area
+review_ids: data/samples/review_ids.csv        # 5.000 review; cột llm_sample (1.000), manual_label (100)
+analysis_areas: data/samples/analysis_areas.csv  # 8 vùng hình chữ nhật (sheet «Vùng»)
