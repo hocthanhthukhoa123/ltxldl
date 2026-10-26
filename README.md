@@ -52,12 +52,17 @@ Nhóm thay các mục TODO bằng hướng dẫn đã kiểm thử trên bản c
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+python src/fetch_ids.py --config configs/cape_town.yaml      # tải sheet «Phân công» -> data/samples/*.csv
 python src/download.py --config configs/cape_town.yaml       # tải 4 mốc vào data/raw/ (~360 MB)
 python src/qa.py --config configs/cape_town.yaml             # -> reports/check_DSE2049-C04-G04-cape-town.csv
 python src/check_answers.py --config configs/cape_town.yaml  # số liệu cho 5 câu hỏi + tự kiểm tra
+                                                             # câu 2 -> reports/sample_check_DSE2049-C04-G04-cape-town.csv
 ```
 
-Danh sách ID của nhóm (sheet «Phân công») nằm trong `data/samples/`.
+`fetch_ids.py` lấy danh sách ID của nhóm từ Google Sheet «Phân công» (ID sheet và tên các tab nằm trong `configs/cape_town.yaml`):
+tab «Listing» → `data/samples/listing_ids.csv` (1.000 listing), tab «Review» → `data/samples/review_ids.csv`
+(5.000 review, cột `llm_sample` = 1.000 mẫu LLM, `manual_label` = 100 nhãn tay), tab «Vùng» → `data/samples/analysis_areas.csv`.
+Nếu không tải được (mạng, quyền xem), tải sheet về dạng .xlsx rồi chạy `python src/fetch_ids.py --config configs/cape_town.yaml --xlsx <tệp>.xlsx`.
 
 ## Lưu ý khi làm bài
 

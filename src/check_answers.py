@@ -9,6 +9,7 @@ data/samples/ (from sheet «Phân công»), prints:
   Q3  listings columns with >= 90% NaN, per snapshot (after filtering)
   Q4  % missing of the columns the team plans to use for KPIs
   +   the self-checks from sheet «Hướng dẫn»
+Q2 is also saved to reports/sample_check_<ma_du_lieu>.csv (one row per snapshot).
 """
 import argparse
 
@@ -48,6 +49,7 @@ def main(cfg):
               f"{sorted(union - set(columns[s])) or '-'}; calendar cols: {cal}")
 
     expected_no_review = [50, 30, 25, 25]
+    q2_rows = []
     for i, s in enumerate(snaps):
         print(f"\n=== {s}")
         L = pd.read_csv(raw_file(cfg, s, "listings"), low_memory=False)
@@ -61,6 +63,12 @@ def main(cfg):
               f"{int(R['manual_label'].sum())}/100 (inside LLM sample: "
               f"{int((R['llm_sample'] & R['manual_label']).sum())}); reviews {len(R)}/5000, "
               f"empty comments {int(R['comments'].isna().sum())}, duplicate ids {int(R['id'].duplicated().sum())}")
+
+        q2_rows.append({"ma_du_lieu": cfg.get("ma_du_lieu", cfg["city"]), "moc": i + 1, "ngay": s,
+                        "review_tim_thay": len(R), "mau_llm_tim_thay": int(R["llm_sample"].sum()),
+                        "nhan_tay_tim_thay": int(R["manual_label"].sum()),
+                        "nhan_tay_trong_mau_llm": int((R["llm_sample"] & R["manual_label"]).sum()),
+                        "mau_llm_rong_comments": int(R.loc[R["llm_sample"], "comments"].isna().sum())})
 
         na = L.isna().mean()
         nan90 = na[na >= 0.9].index.tolist()
@@ -81,6 +89,10 @@ def main(cfg):
         if i == len(snaps) - 1:
             checks["20 missing price (last snapshot)"] = int(L["price"].isna().sum()) == 20
         print("  self-check: " + ", ".join(f"{k} {'OK' if v else 'FAIL'}" for k, v in checks.items()))
+
+    out = ROOT / "reports" / f"sample_check_{cfg.get('ma_du_lieu', cfg['city'])}.csv"
+    pd.DataFrame(q2_rows).to_csv(out, index=False)
+    print(f"\nQ2 table: {out.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
