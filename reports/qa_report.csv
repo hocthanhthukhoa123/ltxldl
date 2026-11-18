@@ -1,0 +1,225 @@
+﻿snapshot,rule,table,column,condition,reason,action,rows,metric,before,after,status
+2025-09-28,structure,listings,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,26877,rows,,,
+2025-09-28,structure,listings,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,79,columns,,,
+2025-09-28,key_null,listings,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
+2025-09-28,key_scope,listings,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,25877,rows,,,
+2025-09-28,dup_exact,listings,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
+2025-09-28,key_conflict,listings,id,"cùng khoá, nội dung khác nhau trong cùng mốc",không biết bản nào đúng,"xoá mọi dòng của khoá, ghi rejected_*.csv",0,rows,,,
+2025-09-28,ids_missing,listings,id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2025-09-28,rows_in_out,listings,(all),số dòng trước và sau làm sạch,đo tác động QA,ghi nhận,0,rows,1000.0,1000.0,
+2025-09-28,text_empty,listings,neighbourhood_cleansed,"rỗng hoặc là chuỗi sentinel (n/a, null, ...)",tránh nhóm rỗng giả,đổi thành NA,0,rows,,,
+2025-09-28,text_empty,listings,room_type,"rỗng hoặc là chuỗi sentinel (n/a, null, ...)",tránh nhóm rỗng giả,đổi thành NA,0,rows,,,
+2025-09-28,encoding,listings,"neighbourhood_cleansed,room_type","chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
+2025-09-28,no_area,listings,analysis_area,id không có analysis_area trong bảng tham chiếu,không gán được khu vực,gắn cờ,0,rows,,,
+2025-09-28,price_empty,listings,price,price rỗng,không có giá,NA,40,rows,,,
+2025-09-28,price_sentinel,listings,price,"price là chuỗi sentinel (n/a, null, ...)",thiếu nhưng ghi bằng chữ,NA,0,rows,,,
+2025-09-28,price_parse,listings,price,price không ép được sang số,định dạng lạ,NA,0,rows,,,
+2025-09-28,price_zero,listings,price,price == 0 (đếm trước khi xoá),giá 0 không phải giá thật,chỉ đếm; price_min sẽ xoá,0,rows,,,
+2025-09-28,price_min,listings,price,price < 0.01,giá không hợp lệ,đổi thành NA,0,median,1434.5,1434.5,
+2025-09-28,zero_kept,listings,estimated_occupancy_l365d,giá trị đúng bằng 0,0 có thể là giá trị thật,"giữ nguyên, chỉ đếm",157,rows,,,
+2025-09-28,occ_range,listings,estimated_occupancy_l365d,"ngoài [0, 365]",số đêm trong 365 ngày,"đổi thành NA, giữ số 0",0,median,36.0,36.0,
+2025-09-28,zero_kept,listings,estimated_revenue_l365d,giá trị đúng bằng 0,0 có thể là giá trị thật,"giữ nguyên, chỉ đếm",140,rows,,,
+2025-09-28,rev_negative,listings,estimated_revenue_l365d,< 0,doanh thu không âm,"đổi thành NA, giữ số 0",0,median,54321.0,54321.0,
+2025-09-28,reviews_neg,listings,number_of_reviews,không phải số nguyên >= 0,số đánh giá là số đếm,đổi thành NA,0,median,15.0,15.0,
+2025-09-28,coord_range,listings,latitude,|latitude| > 90 hoặc |longitude| > 180,toạ độ không tồn tại,đổi thành NA,0,median,-33.93,-33.93,
+2025-09-28,coord_range,listings,longitude,|latitude| > 90 hoặc |longitude| > 180,toạ độ không tồn tại,đổi thành NA,0,median,18.42,18.42,
+2025-09-28,coord_box,listings,"latitude,longitude",toạ độ nằm ngoài hộp của analysis_area,sai vị trí hoặc sai khu vực,gắn cờ,4,rows,,,
+2025-09-28,expected,listings,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",1000,expected_vs_actual,1000.0,1000.0,ok
+2025-09-28,expected,listings,entire_home,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",875,expected_vs_actual,875.0,875.0,ok
+2025-09-28,expected,listings,private_room,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",125,expected_vs_actual,125.0,125.0,ok
+2025-09-28,expected,listings,zero_reviews,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",50,expected_vs_actual,50.0,50.0,ok
+2025-09-28,expected,listings,area_size:A05,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",130,expected_vs_actual,120-130,130.0,ok
+2025-09-28,expected,listings,area_size:A02,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",129,expected_vs_actual,120-130,129.0,ok
+2025-09-28,expected,listings,area_size:A01,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",129,expected_vs_actual,120-130,129.0,ok
+2025-09-28,expected,listings,area_size:A07,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",126,expected_vs_actual,120-130,126.0,ok
+2025-09-28,expected,listings,area_size:A06,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
+2025-09-28,expected,listings,area_size:A08,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
+2025-09-28,expected,listings,area_size:A03,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2025-09-28,expected,listings,area_size:A04,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2025-09-28,structure,reviews,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,664377,rows,,,
+2025-09-28,structure,reviews,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,6,columns,,,
+2025-09-28,key_null,reviews,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
+2025-09-28,key_scope,reviews,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,659377,rows,,,
+2025-09-28,dup_exact,reviews,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
+2025-09-28,key_conflict,reviews,id,"cùng khoá, nội dung khác nhau trong cùng mốc",không biết bản nào đúng,"xoá mọi dòng của khoá, ghi rejected_*.csv",0,rows,,,
+2025-09-28,ids_missing,reviews,id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2025-09-28,rows_in_out,reviews,(all),số dòng trước và sau làm sạch,đo tác động QA,ghi nhận,0,rows,5000.0,5000.0,
+2025-09-28,orphan,reviews,listing_id,listing_id không thuộc danh sách listing của nhóm,đánh giá mồ côi,gắn cờ,0,rows,,,
+2025-09-28,id_mismatch,reviews,listing_id,listing_id khác sheet Review,dữ liệu thô lệch bảng được giao,gắn cờ,0,rows,,,
+2025-09-28,comment_empty,reviews,comments,comments rỗng sau khi cắt khoảng trắng,không có nội dung để phân tích,đổi thành NA,0,rows,,,
+2025-09-28,encoding,reviews,comments,"chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
+2025-09-28,expected,reviews,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",5000,expected_vs_actual,5000.0,5000.0,ok
+2025-09-28,structure,calendar,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,9810109,rows,,,
+2025-09-28,structure,calendar,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,7,columns,,,
+2025-09-28,ids_missing,calendar,listing_id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2025-09-28,cal_days,calendar,date,listing không có đủ 365 ngày khác nhau trong calendar,lịch thiếu hoặc lặp ngày,gắn cờ,0,rows,,,
+2025-09-28,expected,calendar,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",365000,expected_vs_actual,365000.0,365000.0,ok
+2025-12-29,structure,listings,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,23965,rows,,,
+2025-12-29,structure,listings,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,85,columns,,,
+2025-12-29,key_null,listings,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
+2025-12-29,key_scope,listings,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,22965,rows,,,
+2025-12-29,dup_exact,listings,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
+2025-12-29,key_conflict,listings,id,"cùng khoá, nội dung khác nhau trong cùng mốc",không biết bản nào đúng,"xoá mọi dòng của khoá, ghi rejected_*.csv",0,rows,,,
+2025-12-29,ids_missing,listings,id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2025-12-29,rows_in_out,listings,(all),số dòng trước và sau làm sạch,đo tác động QA,ghi nhận,0,rows,1000.0,1000.0,
+2025-12-29,text_empty,listings,neighbourhood_cleansed,"rỗng hoặc là chuỗi sentinel (n/a, null, ...)",tránh nhóm rỗng giả,đổi thành NA,0,rows,,,
+2025-12-29,text_empty,listings,room_type,"rỗng hoặc là chuỗi sentinel (n/a, null, ...)",tránh nhóm rỗng giả,đổi thành NA,0,rows,,,
+2025-12-29,encoding,listings,"neighbourhood_cleansed,room_type","chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
+2025-12-29,no_area,listings,analysis_area,id không có analysis_area trong bảng tham chiếu,không gán được khu vực,gắn cờ,0,rows,,,
+2025-12-29,price_empty,listings,price,price rỗng,không có giá,NA,1000,rows,,,
+2025-12-29,price_sentinel,listings,price,"price là chuỗi sentinel (n/a, null, ...)",thiếu nhưng ghi bằng chữ,NA,0,rows,,,
+2025-12-29,price_parse,listings,price,price không ép được sang số,định dạng lạ,NA,0,rows,,,
+2025-12-29,price_zero,listings,price,price == 0 (đếm trước khi xoá),giá 0 không phải giá thật,chỉ đếm; price_min sẽ xoá,0,rows,,,
+2025-12-29,price_min,listings,price,price < 0.01,giá không hợp lệ,đổi thành NA,0,median,,,
+2025-12-29,zero_kept,listings,estimated_occupancy_l365d,giá trị đúng bằng 0,0 có thể là giá trị thật,"giữ nguyên, chỉ đếm",133,rows,,,
+2025-12-29,occ_range,listings,estimated_occupancy_l365d,"ngoài [0, 365]",số đêm trong 365 ngày,"đổi thành NA, giữ số 0",0,median,36.0,36.0,
+2025-12-29,zero_kept,listings,estimated_revenue_l365d,giá trị đúng bằng 0,0 có thể là giá trị thật,"giữ nguyên, chỉ đếm",0,rows,,,
+2025-12-29,rev_negative,listings,estimated_revenue_l365d,< 0,doanh thu không âm,"đổi thành NA, giữ số 0",0,median,,,
+2025-12-29,reviews_neg,listings,number_of_reviews,không phải số nguyên >= 0,số đánh giá là số đếm,đổi thành NA,0,median,18.0,18.0,
+2025-12-29,coord_range,listings,latitude,|latitude| > 90 hoặc |longitude| > 180,toạ độ không tồn tại,đổi thành NA,0,median,-33.93,-33.93,
+2025-12-29,coord_range,listings,longitude,|latitude| > 90 hoặc |longitude| > 180,toạ độ không tồn tại,đổi thành NA,0,median,18.42,18.42,
+2025-12-29,coord_box,listings,"latitude,longitude",toạ độ nằm ngoài hộp của analysis_area,sai vị trí hoặc sai khu vực,gắn cờ,4,rows,,,
+2025-12-29,expected,listings,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",1000,expected_vs_actual,1000.0,1000.0,ok
+2025-12-29,expected,listings,entire_home,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",875,expected_vs_actual,875.0,875.0,ok
+2025-12-29,expected,listings,private_room,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",125,expected_vs_actual,125.0,125.0,ok
+2025-12-29,expected,listings,zero_reviews,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",30,expected_vs_actual,30.0,30.0,ok
+2025-12-29,expected,listings,area_size:A05,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",130,expected_vs_actual,120-130,130.0,ok
+2025-12-29,expected,listings,area_size:A02,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",129,expected_vs_actual,120-130,129.0,ok
+2025-12-29,expected,listings,area_size:A01,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",129,expected_vs_actual,120-130,129.0,ok
+2025-12-29,expected,listings,area_size:A07,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",126,expected_vs_actual,120-130,126.0,ok
+2025-12-29,expected,listings,area_size:A06,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
+2025-12-29,expected,listings,area_size:A08,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
+2025-12-29,expected,listings,area_size:A03,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2025-12-29,expected,listings,area_size:A04,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2025-12-29,structure,reviews,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,650538,rows,,,
+2025-12-29,structure,reviews,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,6,columns,,,
+2025-12-29,key_null,reviews,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
+2025-12-29,key_scope,reviews,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,645538,rows,,,
+2025-12-29,dup_exact,reviews,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
+2025-12-29,key_conflict,reviews,id,"cùng khoá, nội dung khác nhau trong cùng mốc",không biết bản nào đúng,"xoá mọi dòng của khoá, ghi rejected_*.csv",0,rows,,,
+2025-12-29,ids_missing,reviews,id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2025-12-29,rows_in_out,reviews,(all),số dòng trước và sau làm sạch,đo tác động QA,ghi nhận,0,rows,5000.0,5000.0,
+2025-12-29,orphan,reviews,listing_id,listing_id không thuộc danh sách listing của nhóm,đánh giá mồ côi,gắn cờ,0,rows,,,
+2025-12-29,id_mismatch,reviews,listing_id,listing_id khác sheet Review,dữ liệu thô lệch bảng được giao,gắn cờ,0,rows,,,
+2025-12-29,comment_empty,reviews,comments,comments rỗng sau khi cắt khoảng trắng,không có nội dung để phân tích,đổi thành NA,0,rows,,,
+2025-12-29,encoding,reviews,comments,"chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
+2025-12-29,expected,reviews,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",5000,expected_vs_actual,5000.0,5000.0,ok
+2025-12-29,structure,calendar,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,8747272,rows,,,
+2025-12-29,structure,calendar,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,5,columns,,,
+2025-12-29,ids_missing,calendar,listing_id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2025-12-29,cal_days,calendar,date,listing không có đủ 365 ngày khác nhau trong calendar,lịch thiếu hoặc lặp ngày,gắn cờ,0,rows,,,
+2025-12-29,expected,calendar,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",365000,expected_vs_actual,365000.0,365000.0,ok
+2026-03-30,structure,listings,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,21900,rows,,,
+2026-03-30,structure,listings,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,90,columns,,,
+2026-03-30,key_null,listings,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
+2026-03-30,key_scope,listings,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,20900,rows,,,
+2026-03-30,dup_exact,listings,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
+2026-03-30,key_conflict,listings,id,"cùng khoá, nội dung khác nhau trong cùng mốc",không biết bản nào đúng,"xoá mọi dòng của khoá, ghi rejected_*.csv",0,rows,,,
+2026-03-30,ids_missing,listings,id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2026-03-30,rows_in_out,listings,(all),số dòng trước và sau làm sạch,đo tác động QA,ghi nhận,0,rows,1000.0,1000.0,
+2026-03-30,text_empty,listings,neighbourhood_cleansed,"rỗng hoặc là chuỗi sentinel (n/a, null, ...)",tránh nhóm rỗng giả,đổi thành NA,0,rows,,,
+2026-03-30,text_empty,listings,room_type,"rỗng hoặc là chuỗi sentinel (n/a, null, ...)",tránh nhóm rỗng giả,đổi thành NA,0,rows,,,
+2026-03-30,encoding,listings,"neighbourhood_cleansed,room_type","chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
+2026-03-30,no_area,listings,analysis_area,id không có analysis_area trong bảng tham chiếu,không gán được khu vực,gắn cờ,0,rows,,,
+2026-03-30,price_empty,listings,price,price rỗng,không có giá,NA,20,rows,,,
+2026-03-30,price_sentinel,listings,price,"price là chuỗi sentinel (n/a, null, ...)",thiếu nhưng ghi bằng chữ,NA,0,rows,,,
+2026-03-30,price_parse,listings,price,price không ép được sang số,định dạng lạ,NA,0,rows,,,
+2026-03-30,price_zero,listings,price,price == 0 (đếm trước khi xoá),giá 0 không phải giá thật,chỉ đếm; price_min sẽ xoá,0,rows,,,
+2026-03-30,price_min,listings,price,price < 0.01,giá không hợp lệ,đổi thành NA,0,median,1908.09,1908.09,
+2026-03-30,zero_kept,listings,estimated_occupancy_l365d,giá trị đúng bằng 0,0 có thể là giá trị thật,"giữ nguyên, chỉ đếm",153,rows,,,
+2026-03-30,occ_range,listings,estimated_occupancy_l365d,"ngoài [0, 365]",số đêm trong 365 ngày,"đổi thành NA, giữ số 0",0,median,40.0,40.0,
+2026-03-30,zero_kept,listings,estimated_revenue_l365d,giá trị đúng bằng 0,0 có thể là giá trị thật,"giữ nguyên, chỉ đếm",145,rows,,,
+2026-03-30,rev_negative,listings,estimated_revenue_l365d,< 0,doanh thu không âm,"đổi thành NA, giữ số 0",0,median,76164.0,76164.0,
+2026-03-30,reviews_neg,listings,number_of_reviews,không phải số nguyên >= 0,số đánh giá là số đếm,đổi thành NA,0,median,21.0,21.0,
+2026-03-30,coord_range,listings,latitude,|latitude| > 90 hoặc |longitude| > 180,toạ độ không tồn tại,đổi thành NA,0,median,-33.93,-33.93,
+2026-03-30,coord_range,listings,longitude,|latitude| > 90 hoặc |longitude| > 180,toạ độ không tồn tại,đổi thành NA,0,median,18.42,18.42,
+2026-03-30,coord_box,listings,"latitude,longitude",toạ độ nằm ngoài hộp của analysis_area,sai vị trí hoặc sai khu vực,gắn cờ,2,rows,,,
+2026-03-30,expected,listings,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",1000,expected_vs_actual,1000.0,1000.0,ok
+2026-03-30,expected,listings,entire_home,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",875,expected_vs_actual,875.0,875.0,ok
+2026-03-30,expected,listings,private_room,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",125,expected_vs_actual,125.0,125.0,ok
+2026-03-30,expected,listings,zero_reviews,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",25,expected_vs_actual,25.0,25.0,ok
+2026-03-30,expected,listings,area_size:A05,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",130,expected_vs_actual,120-130,130.0,ok
+2026-03-30,expected,listings,area_size:A02,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",129,expected_vs_actual,120-130,129.0,ok
+2026-03-30,expected,listings,area_size:A01,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",129,expected_vs_actual,120-130,129.0,ok
+2026-03-30,expected,listings,area_size:A07,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",126,expected_vs_actual,120-130,126.0,ok
+2026-03-30,expected,listings,area_size:A06,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
+2026-03-30,expected,listings,area_size:A08,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
+2026-03-30,expected,listings,area_size:A03,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2026-03-30,expected,listings,area_size:A04,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2026-03-30,structure,reviews,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,669859,rows,,,
+2026-03-30,structure,reviews,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,6,columns,,,
+2026-03-30,key_null,reviews,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
+2026-03-30,key_scope,reviews,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,664859,rows,,,
+2026-03-30,dup_exact,reviews,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
+2026-03-30,key_conflict,reviews,id,"cùng khoá, nội dung khác nhau trong cùng mốc",không biết bản nào đúng,"xoá mọi dòng của khoá, ghi rejected_*.csv",0,rows,,,
+2026-03-30,ids_missing,reviews,id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2026-03-30,rows_in_out,reviews,(all),số dòng trước và sau làm sạch,đo tác động QA,ghi nhận,0,rows,5000.0,5000.0,
+2026-03-30,orphan,reviews,listing_id,listing_id không thuộc danh sách listing của nhóm,đánh giá mồ côi,gắn cờ,0,rows,,,
+2026-03-30,id_mismatch,reviews,listing_id,listing_id khác sheet Review,dữ liệu thô lệch bảng được giao,gắn cờ,0,rows,,,
+2026-03-30,comment_empty,reviews,comments,comments rỗng sau khi cắt khoảng trắng,không có nội dung để phân tích,đổi thành NA,0,rows,,,
+2026-03-30,encoding,reviews,comments,"chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
+2026-03-30,expected,reviews,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",5000,expected_vs_actual,5000.0,5000.0,ok
+2026-03-30,structure,calendar,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,7993527,rows,,,
+2026-03-30,structure,calendar,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,5,columns,,,
+2026-03-30,ids_missing,calendar,listing_id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2026-03-30,cal_days,calendar,date,listing không có đủ 365 ngày khác nhau trong calendar,lịch thiếu hoặc lặp ngày,gắn cờ,0,rows,,,
+2026-03-30,expected,calendar,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",365000,expected_vs_actual,365000.0,365000.0,ok
+2026-06-29,structure,listings,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,27381,rows,,,
+2026-06-29,structure,listings,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,90,columns,,,
+2026-06-29,key_null,listings,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
+2026-06-29,key_scope,listings,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,26381,rows,,,
+2026-06-29,dup_exact,listings,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
+2026-06-29,key_conflict,listings,id,"cùng khoá, nội dung khác nhau trong cùng mốc",không biết bản nào đúng,"xoá mọi dòng của khoá, ghi rejected_*.csv",0,rows,,,
+2026-06-29,ids_missing,listings,id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2026-06-29,rows_in_out,listings,(all),số dòng trước và sau làm sạch,đo tác động QA,ghi nhận,0,rows,1000.0,1000.0,
+2026-06-29,text_empty,listings,neighbourhood_cleansed,"rỗng hoặc là chuỗi sentinel (n/a, null, ...)",tránh nhóm rỗng giả,đổi thành NA,0,rows,,,
+2026-06-29,text_empty,listings,room_type,"rỗng hoặc là chuỗi sentinel (n/a, null, ...)",tránh nhóm rỗng giả,đổi thành NA,0,rows,,,
+2026-06-29,encoding,listings,"neighbourhood_cleansed,room_type","chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
+2026-06-29,no_area,listings,analysis_area,id không có analysis_area trong bảng tham chiếu,không gán được khu vực,gắn cờ,0,rows,,,
+2026-06-29,price_empty,listings,price,price rỗng,không có giá,NA,20,rows,,,
+2026-06-29,price_sentinel,listings,price,"price là chuỗi sentinel (n/a, null, ...)",thiếu nhưng ghi bằng chữ,NA,0,rows,,,
+2026-06-29,price_parse,listings,price,price không ép được sang số,định dạng lạ,NA,0,rows,,,
+2026-06-29,price_zero,listings,price,price == 0 (đếm trước khi xoá),giá 0 không phải giá thật,chỉ đếm; price_min sẽ xoá,0,rows,,,
+2026-06-29,price_min,listings,price,price < 0.01,giá không hợp lệ,đổi thành NA,0,median,1683.5,1683.5,
+2026-06-29,zero_kept,listings,estimated_occupancy_l365d,giá trị đúng bằng 0,0 có thể là giá trị thật,"giữ nguyên, chỉ đếm",162,rows,,,
+2026-06-29,occ_range,listings,estimated_occupancy_l365d,"ngoài [0, 365]",số đêm trong 365 ngày,"đổi thành NA, giữ số 0",0,median,36.0,36.0,
+2026-06-29,zero_kept,listings,estimated_revenue_l365d,giá trị đúng bằng 0,0 có thể là giá trị thật,"giữ nguyên, chỉ đếm",160,rows,,,
+2026-06-29,rev_negative,listings,estimated_revenue_l365d,< 0,doanh thu không âm,"đổi thành NA, giữ số 0",0,median,69045.0,69045.0,
+2026-06-29,reviews_neg,listings,number_of_reviews,không phải số nguyên >= 0,số đánh giá là số đếm,đổi thành NA,0,median,23.0,23.0,
+2026-06-29,coord_range,listings,latitude,|latitude| > 90 hoặc |longitude| > 180,toạ độ không tồn tại,đổi thành NA,0,median,-33.93,-33.93,
+2026-06-29,coord_range,listings,longitude,|latitude| > 90 hoặc |longitude| > 180,toạ độ không tồn tại,đổi thành NA,0,median,18.42,18.42,
+2026-06-29,coord_box,listings,"latitude,longitude",toạ độ nằm ngoài hộp của analysis_area,sai vị trí hoặc sai khu vực,gắn cờ,0,rows,,,
+2026-06-29,expected,listings,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",1000,expected_vs_actual,1000.0,1000.0,ok
+2026-06-29,expected,listings,entire_home,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",875,expected_vs_actual,875.0,875.0,ok
+2026-06-29,expected,listings,private_room,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",125,expected_vs_actual,125.0,125.0,ok
+2026-06-29,expected,listings,zero_reviews,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",25,expected_vs_actual,25.0,25.0,ok
+2026-06-29,expected,listings,missing_price,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",20,expected_vs_actual,20.0,20.0,ok
+2026-06-29,expected,listings,area_size:A05,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",130,expected_vs_actual,120-130,130.0,ok
+2026-06-29,expected,listings,area_size:A02,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",129,expected_vs_actual,120-130,129.0,ok
+2026-06-29,expected,listings,area_size:A01,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",129,expected_vs_actual,120-130,129.0,ok
+2026-06-29,expected,listings,area_size:A07,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",126,expected_vs_actual,120-130,126.0,ok
+2026-06-29,expected,listings,area_size:A06,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
+2026-06-29,expected,listings,area_size:A08,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
+2026-06-29,expected,listings,area_size:A04,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2026-06-29,expected,listings,area_size:A03,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2026-06-29,structure,reviews,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,760023,rows,,,
+2026-06-29,structure,reviews,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,6,columns,,,
+2026-06-29,key_null,reviews,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
+2026-06-29,key_scope,reviews,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,755023,rows,,,
+2026-06-29,dup_exact,reviews,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
+2026-06-29,key_conflict,reviews,id,"cùng khoá, nội dung khác nhau trong cùng mốc",không biết bản nào đúng,"xoá mọi dòng của khoá, ghi rejected_*.csv",0,rows,,,
+2026-06-29,ids_missing,reviews,id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2026-06-29,rows_in_out,reviews,(all),số dòng trước và sau làm sạch,đo tác động QA,ghi nhận,0,rows,5000.0,5000.0,
+2026-06-29,orphan,reviews,listing_id,listing_id không thuộc danh sách listing của nhóm,đánh giá mồ côi,gắn cờ,0,rows,,,
+2026-06-29,id_mismatch,reviews,listing_id,listing_id khác sheet Review,dữ liệu thô lệch bảng được giao,gắn cờ,0,rows,,,
+2026-06-29,comment_empty,reviews,comments,comments rỗng sau khi cắt khoảng trắng,không có nội dung để phân tích,đổi thành NA,0,rows,,,
+2026-06-29,encoding,reviews,comments,"chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
+2026-06-29,expected,reviews,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",5000,expected_vs_actual,5000.0,5000.0,ok
+2026-06-29,structure,calendar,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,9994036,rows,,,
+2026-06-29,structure,calendar,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,5,columns,,,
+2026-06-29,ids_missing,calendar,listing_id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2026-06-29,cal_days,calendar,date,listing không có đủ 365 ngày khác nhau trong calendar,lịch thiếu hoặc lặp ngày,gắn cờ,0,rows,,,
+2026-06-29,expected,calendar,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",365000,expected_vs_actual,365000.0,365000.0,ok
+all,outlier,listings,price,"log1p ngoài [Q1-k*IQR, Q3+k*IQR] theo mốc x room_type, chỉ tính giá trị khác 0 (bỏ qua khi IQR = 0)",giá trị cực đoan có thể là lỗi nhập,"gắn cờ, giữ giá trị",90,median,1670.0,1624.0,
+all,outlier,listings,estimated_revenue_l365d,"log1p ngoài [Q1-k*IQR, Q3+k*IQR] theo mốc x room_type, chỉ tính giá trị khác 0 (bỏ qua khi IQR = 0)",giá trị cực đoan có thể là lỗi nhập,"gắn cờ, giữ giá trị",0,median,66351.0,66351.0,
+all,dup_snapshot,reviews,id,cùng review id ở nhiều mốc,đánh giá tích luỹ nên lặp giữa các mốc là bình thường,giữ mốc mới nhất,15000,rows,,,

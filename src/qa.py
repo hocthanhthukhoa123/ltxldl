@@ -1,146 +1,267 @@
-"""Clean the downloaded Inside Airbnb snapshots and write the check report.
-
-    python src/qa.py --config configs/cape_town.yaml [--code DSE2049-C01-G01-cape_town]
-
-Output: reports/check_<ma_du_lieu>.csv  (4 rows, one per snapshot, 16 fields).
-Empty cells mean "not available" (NaN), e.g. when the download failed.
-
-All counts are computed AFTER filtering to the team's IDs (sheet «Phân công»):
-  listings  -> id in config `listing_ids` (1,000 per snapshot)
-  calendar  -> listing_id in config `listing_ids` (365,000 per snapshot)
-  reviews   -> id in config `review_ids` (5,000 per snapshot)
-Without those config keys the whole files are used.
-"""
-import argparse
-import re
+"""QA và làm sạch listings + reviews, khảo sát cấu trúc cả 3 tệp (gồm calendar): python src/qa.py configs/cape_town.yaml
+Ra: data/processed/{listings,reviews}_clean.csv, rejected_*.csv, reports/qa_report.csv.
+Calendar chỉ được khảo sát (số dòng, số cột, đủ 365 ngày/listing), không dùng cho KPI: KPI dùng estimated_occupancy_l365d.
+Excel chỉ đọc lần đầu; ID và vùng của nhóm được cache ở data/processed/refs/ (không cần commit Excel)."""
 import sys
 
+import numpy as np
 import pandas as pd
+import yaml
 
-from download import ROOT, load_config, raw_file, read_manifest
+from download import ROOT, build_path
 
-FIELDS = ["ma_du_lieu", "moc", "ngay", "tai_ve_ok",
-          "listings_bytes", "calendar_bytes", "reviews_bytes",
-          "listings_dong", "calendar_dong", "reviews_dong",
-          "entire_home", "private_room", "khong_co_review", "thieu_price",
-          "so_cot_listings", "so_cot_nan_90"]
-NEEDED = ("listings", "calendar", "reviews")
-CHUNK = 500_000
-
-
-def download_status(cfg, snap, manifest):
-    """'co' if all 3 files were downloaded, else an HTTP code (e.g. '403') or a short reason.
-
-    Only a failed DOWNLOAD counts here. A file that downloaded fine but has a data
-    problem (e.g. a missing column) is still 'co'; the problem stays in the manifest.
-    """
-    for name in NEEDED:
-        row = manifest.get((snap, name))
-        if row and row.get("action") == "failed":
-            m = re.search(r"HTTP (\d{3})", row.get("message", ""))
-            return m.group(1) if m else "loi"
-        if not raw_file(cfg, snap, name).exists():
-            return "thieu_tep"
-        if row and row.get("status") == "error":
-            print(f"  note: {snap}/{name} has a data problem: {row.get('message', '')}")
-    return "co"
-
-
-def to_price(series):
-    """'$1,234.00' -> 1234.0 ; empty / unparsable -> NaN."""
-    return pd.to_numeric(series.astype("string").str.replace(r"[^0-9.]", "", regex=True),
-                         errors="coerce")
-
-
-def load_ids(cfg, key, column):
-    """Set of int IDs from the CSV named in the config, or None if the key is absent."""
-    if not cfg.get(key):
-        return None
-    ids = pd.read_csv(ROOT / cfg[key], dtype=str)[column]
-    return set(pd.to_numeric(ids, errors="raise").astype("int64"))
+ENC = "[ÃÂ][^A-Za-z\\s]|â€|\ufffd"  # dấu hiệu lỗi mã hoá (mojibake)
+SENTINELS = {"n/a", "na", "nan", "null", "none", "-", "--", "unknown"}  # chuỗi đánh dấu "thiếu"
+LIST_COLS = ["id", "neighbourhood_cleansed", "room_type", "price", "estimated_occupancy_l365d",
+             "estimated_revenue_l365d", "number_of_reviews", "latitude", "longitude"]
+# tên quy tắc -> (điều kiện, lý do, hành động); bảng/cột được truyền lúc ghi log
+RULES = {
+    "key_null": ("khoá rỗng hoặc không phải số nguyên", "không định danh được dòng", "không đọc vào"),
+    "key_scope": ("khoá không thuộc danh sách ID của nhóm", "chỉ phân tích mẫu được giao", "không đọc vào"),
+    "dup_exact": ("trùng mọi cột trong cùng mốc", "dòng lặp không thêm thông tin", "giữ 1 dòng, ghi rejected_*.csv"),
+    "key_conflict": ("cùng khoá, nội dung khác nhau trong cùng mốc", "không biết bản nào đúng", "xoá mọi dòng của khoá, ghi rejected_*.csv"),
+    "rows_in_out": ("số dòng trước và sau làm sạch", "đo tác động QA", "ghi nhận"),
+    "ids_missing": ("ID có trong sheet nhưng không có trong mốc", "mốc thiếu ID của nhóm", "ghi nhận"),
+    "dup_snapshot": ("cùng review id ở nhiều mốc", "đánh giá tích luỹ nên lặp giữa các mốc là bình thường", "giữ mốc mới nhất"),
+    "text_empty": ("rỗng hoặc là chuỗi sentinel (n/a, null, ...)", "tránh nhóm rỗng giả", "đổi thành NA"),
+    "encoding": ("chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)", "văn bản có thể đã bị hỏng", "gắn cờ"),
+    "no_area": ("id không có analysis_area trong bảng tham chiếu", "không gán được khu vực", "gắn cờ"),
+    "price_empty": ("price rỗng", "không có giá", "NA"),
+    "price_sentinel": ("price là chuỗi sentinel (n/a, null, ...)", "thiếu nhưng ghi bằng chữ", "NA"),
+    "price_parse": ("price không ép được sang số", "định dạng lạ", "NA"),
+    "price_zero": ("price == 0 (đếm trước khi xoá)", "giá 0 không phải giá thật", "chỉ đếm; price_min sẽ xoá"),
+    "price_min": ("price < 0.01", "giá không hợp lệ", "đổi thành NA"),
+    "outlier": ("log1p ngoài [Q1-k*IQR, Q3+k*IQR] theo mốc x room_type, chỉ tính giá trị khác 0 (bỏ qua khi IQR = 0)", "giá trị cực đoan có thể là lỗi nhập", "gắn cờ, giữ giá trị"),
+    "occ_range": ("ngoài [0, 365]", "số đêm trong 365 ngày", "đổi thành NA, giữ số 0"),
+    "rev_negative": ("< 0", "doanh thu không âm", "đổi thành NA, giữ số 0"),
+    "zero_kept": ("giá trị đúng bằng 0", "0 có thể là giá trị thật", "giữ nguyên, chỉ đếm"),
+    "reviews_neg": ("không phải số nguyên >= 0", "số đánh giá là số đếm", "đổi thành NA"),
+    "coord_range": ("|latitude| > 90 hoặc |longitude| > 180", "toạ độ không tồn tại", "đổi thành NA"),
+    "coord_box": ("toạ độ nằm ngoài hộp của analysis_area", "sai vị trí hoặc sai khu vực", "gắn cờ"),
+    "orphan": ("listing_id không thuộc danh sách listing của nhóm", "đánh giá mồ côi", "gắn cờ"),
+    "id_mismatch": ("listing_id khác sheet Review", "dữ liệu thô lệch bảng được giao", "gắn cờ"),
+    "comment_empty": ("comments rỗng sau khi cắt khoảng trắng", "không có nội dung để phân tích", "đổi thành NA"),
+    "structure": ("số dòng / số cột của tệp thô (cả thành phố)", "khảo sát cấu trúc từng tệp theo đề", "ghi nhận"),
+    "cal_days": ("listing không có đủ 365 ngày khác nhau trong calendar", "lịch thiếu hoặc lặp ngày", "gắn cờ"),
+    "expected": ("số liệu khác kỳ vọng trong qa.expected", "lọc sai ID hoặc dữ liệu đổi", "ghi ok/error, không dừng"),
+}
 
 
-def clean_listings(path, keep_ids=None):
-    """Read listings, keep only the team's ids, drop duplicate ids, sort by id, make price numeric.
-    Returns (dataframe, number of columns, number of columns with >=90% NaN)."""
-    df = pd.read_csv(path, low_memory=False)
-    df["id"] = pd.to_numeric(df["id"], errors="coerce")
-    df = df.dropna(subset=["id"]).astype({"id": "int64"})
-    if keep_ids is not None:
-        df = df[df["id"].isin(keep_ids)]
-    df = df.drop_duplicates(subset="id").sort_values("id").reset_index(drop=True)
-    nan90 = df.columns[df.isna().mean() >= 0.9].tolist() if len(df) else list(df.columns)
-    n_nan90 = len(nan90)
-    print(f"  listings columns with >=90% NaN ({n_nan90}): {', '.join(nan90)}")
-    n_cols = df.shape[1]
-    if "price" in df.columns:
-        df["price"] = to_price(df["price"])
-    if "room_type" in df.columns:
-        df["room_type"] = df["room_type"].astype("string").str.strip()
-    return df, n_cols, n_nan90
+def to_int(s):
+    """Chuỗi -> Int64 qua int Python (tránh mất chính xác của float với ID 19 chữ số)."""
+    s = s.str.strip().str.replace(r"\.0+$", "", regex=True)
+    ok = s.str.fullmatch(r"-?\d+")
+    return pd.Series([int(v) if g else pd.NA for v, g in zip(s, ok)], index=s.index, dtype="Int64")
 
 
-def count_rows(path, column, keep_ids=None):
-    """Count data rows of a big csv.gz without loading it all (only rows whose `column` is in keep_ids)."""
-    total = 0
-    for chunk in pd.read_csv(path, usecols=[column], chunksize=CHUNK):
-        ids = pd.to_numeric(chunk[column], errors="coerce")
-        total += int(ids.isin(keep_ids).sum()) if keep_ids is not None else len(chunk)
-    return total
+def to_float(s):
+    return pd.to_numeric(s, errors="coerce")
 
 
-def check_snapshot(cfg, code, index, snap, manifest, listing_ids=None, review_ids=None):
-    row = dict.fromkeys(FIELDS, "")
-    row.update(ma_du_lieu=code, moc=index, ngay=snap, tai_ve_ok=download_status(cfg, snap, manifest))
-    if row["tai_ve_ok"] != "co":
-        return row
-
-    paths = {n: raw_file(cfg, snap, n) for n in NEEDED}
-    for n in NEEDED:
-        row[f"{n}_bytes"] = paths[n].stat().st_size
-
-    df, n_cols, n_nan90 = clean_listings(paths["listings"], listing_ids)
-    row["listings_dong"] = len(df)
-    row["calendar_dong"] = count_rows(paths["calendar"], "listing_id", listing_ids)
-    row["reviews_dong"] = count_rows(paths["reviews"], "id", review_ids)
-    row["so_cot_listings"] = n_cols
-    row["so_cot_nan_90"] = n_nan90
-
-    if "room_type" in df.columns:
-        row["entire_home"] = int((df["room_type"] == "Entire home/apt").sum())
-        row["private_room"] = int((df["room_type"] == "Private room").sum())
-    if "number_of_reviews" in df.columns:
-        row["khong_co_review"] = int((pd.to_numeric(df["number_of_reviews"], errors="coerce") == 0).sum())
-    if "price" in df.columns:
-        row["thieu_price"] = int(df["price"].isna().sum())
-    return row
+def to_money(s):  # bỏ ký hiệu tiền tệ và dấu phẩy ngăn cách nghìn
+    return to_float(s.str.replace(r"[^\d.\-]", "", regex=True))
 
 
-def run(cfg, code=None):
-    code = code or cfg.get("ma_du_lieu") or cfg["city"]
-    reports = ROOT / cfg.get("reports_dir", "reports")
-    manifest = read_manifest(reports / "download_manifest.csv")
+def iqr_flag(x, groups, k):
+    z = np.log1p(x)
+    q1, q3 = (z.groupby(groups).transform(lambda v: v.quantile(p)) for p in (0.25, 0.75))
+    return ((z < q1 - k * (q3 - q1)) | (z > q3 + k * (q3 - q1))) & (q3 > q1)
 
-    listing_ids = load_ids(cfg, "listing_ids", "listing_id")
-    review_ids = load_ids(cfg, "review_ids", "review_id")
-    if listing_ids is None:
-        print("note: no listing_ids in config -> using the whole files")
 
-    rows = []
-    for i, snap in enumerate(cfg["snapshots"], start=1):
-        print(f"checking {snap} ...")
-        rows.append(check_snapshot(cfg, code, i, snap, manifest, listing_ids, review_ids))
+def _r(v):
+    return v if isinstance(v, str) else "" if pd.isna(v) else round(float(v), 2)
 
-    reports.mkdir(parents=True, exist_ok=True)
-    out = reports / f"check_{code}.csv"
-    pd.DataFrame(rows, columns=FIELDS).to_csv(out, index=False)
-    print(f"report: {out}")
-    return 0 if all(r["tai_ve_ok"] == "co" for r in rows) else 1
+
+class Report:
+    """Gom các dòng của reports/qa_report.csv (theo từng mốc) và các dòng bị loại."""
+
+    def __init__(self, exp):
+        self.rows, self.rejected, self.snap = [], {}, ""
+        self.exp = {k: {str(d): n for d, n in v.items()} if isinstance(v, dict) else v for k, v in exp.items()}
+
+    def log(self, rule, table, col, n, metric="rows", before="", after="", status=""):
+        cond, why, act = RULES[rule]
+        self.rows.append(dict(snapshot=self.snap, rule=rule, table=table, column=col, condition=cond, reason=why,
+                              action=act, rows=int(n), metric=metric, before=_r(before), after=_r(after), status=status))
+
+    def blank(self, x, bad, rule, table, col, keep_zero=False):
+        """Đổi giá trị vi phạm thành NA; ghi median trước/sau (keep_zero: đếm thêm số 0 được giữ)."""
+        if keep_zero:
+            self.log("zero_kept", table, col, (x == 0).sum())
+        bad = (bad.fillna(False) & x.notna()).astype(bool)
+        y = x.mask(bad)
+        self.log(rule, table, col, bad.sum(), "median", x.median(), y.median())
+        return y
+
+    def flag(self, df, name, mask, rule, table, col, x=None):
+        df[name] = mask.fillna(False).astype(bool)
+        kw = {} if x is None else dict(metric="median", before=x.median(), after=x[~df[name]].median())
+        self.log(rule, table, col, df[name].sum(), **kw)
+
+    def expect(self, table, col, actual, key=None):
+        """So với qa.expected (giá trị, khoảng [min, max], hoặc dict theo mốc); không có kỳ vọng thì bỏ qua."""
+        e = self.exp.get(key or col)
+        e = e.get(self.snap) if isinstance(e, dict) else e
+        if e is not None:
+            ok = e[0] <= actual <= e[1] if isinstance(e, list) else actual == e
+            self.log("expected", table, col, actual, "expected_vs_actual", "-".join(map(str, e)) if isinstance(e, list) else e,
+                     actual, "ok" if ok else "error")
+
+
+def load_refs(cfg):
+    """ID/vùng của nhóm từ Excel, cache CSV nhỏ (có thể commit); có cache thì không cần Excel."""
+    base, g = ROOT / "data" / "processed" / "refs", cfg["group_code"]
+    base.mkdir(parents=True, exist_ok=True)
+    refs = {}
+    for sheet, key in (("Listing", "listing"), ("Review", "review"), ("Vùng", "area")):
+        cache = base / f"{key}_{g}.csv"
+        if not cache.exists():
+            df = pd.read_excel(ROOT / cfg["ids_file"], sheet_name=sheet, dtype=str)
+            mine = df["Thành phố"].str.lower().str.replace(" ", "_") == cfg["city"] if key == "area" else df["Mã dữ liệu"] == g
+            df[mine].to_csv(cache, index=False)
+        refs[key] = pd.read_csv(cache, dtype=str)
+    return refs
+
+
+def read(path, ids, table, rep, **kw):
+    """Đọc theo khối, chỉ giữ dòng thuộc ID của nhóm (so chuỗi thô); đếm khoá rỗng và dòng ngoài nhóm."""
+    kept, total, nulls = [], 0, 0
+    ncols = len(pd.read_csv(path, nrows=0).columns)  # đếm trên header đầy đủ (kể cả khi usecols chỉ lấy vài cột)
+    for c in pd.read_csv(path, dtype=str, na_filter=False, encoding_errors="replace", chunksize=500_000, **kw):
+        k = c["id"].str.strip().str.replace(r"\.0+$", "", regex=True)
+        total, nulls = total + len(c), nulls + (~k.str.fullmatch(r"\d+")).sum()
+        kept.append(c[k.isin(ids)])
+    df = pd.concat(kept, ignore_index=True)
+    rep.log("structure", table, "(rows)", total, "rows")
+    rep.log("structure", table, "(columns)", ncols, "columns")
+    rep.log("key_null", table, "id", nulls)
+    rep.log("key_scope", table, "id", total - len(df) - nulls)
+    return df
+
+
+def prep(df, ids, table, rep):
+    """Ép id sang số nguyên; loại dòng trùng hệt và xung đột khoá (lưu vào rejected)."""
+    n0, df = len(df), df.assign(id=to_int(df["id"]))
+    why = pd.Series("", index=df.index)
+    for rule in ("dup_exact", "key_conflict"):
+        cand = df[why == ""]
+        bad = cand.duplicated() if rule == "dup_exact" else cand.duplicated("id", keep=False)
+        why[bad[bad].index] = rule
+        rep.log(rule, table, "(all)" if rule == "dup_exact" else "id", bad.sum())
+    out = df[why == ""]
+    rep.rejected.setdefault(table, []).append(df[why != ""].assign(snapshot=rep.snap, reject_reason=why[why != ""]))
+    rep.log("ids_missing", table, "id", len(ids - set(out["id"])))
+    rep.log("rows_in_out", table, "(all)", n0 - len(out), "rows", n0, len(out))
+    return out.assign(id=out["id"].astype("int64"))
+
+
+def clean_listings(df, ids, areas, boxes, rep):
+    t = "listings"
+    df = prep(df, ids, t, rep)[LIST_COLS].assign(snapshot=rep.snap)
+    for c in ("neighbourhood_cleansed", "room_type"):  # (2) text, rỗng/sentinel -> NA
+        s = df[c].str.strip()
+        miss = (s == "") | s.str.lower().isin(SENTINELS)
+        rep.log("text_empty", t, c, miss.sum())
+        df[c] = s.mask(miss)
+    both = df["neighbourhood_cleansed"].str.contains(ENC, na=False) | df["room_type"].str.contains(ENC, na=False)
+    rep.flag(df, "flag_encoding", both, "encoding", t, "neighbourhood_cleansed,room_type")
+    df["analysis_area"] = df["id"].map(areas)  # (3) khu vực từ bảng tham chiếu
+    rep.flag(df, "flag_no_area", df["analysis_area"].isna(), "no_area", t, "analysis_area")
+    raw = df["price"].str.strip()  # (4) giá
+    empty, sent, p = raw == "", raw.str.lower().isin(SENTINELS), to_money(raw)
+    rep.log("price_empty", t, "price", empty.sum())
+    rep.log("price_sentinel", t, "price", sent.sum())
+    rep.log("price_parse", t, "price", (p.isna() & ~empty & ~sent).sum())
+    rep.log("price_zero", t, "price", (p == 0).sum())
+    df["price"] = rep.blank(p, p < 0.01, "price_min", t, "price")
+    occ = to_float(df["estimated_occupancy_l365d"])  # (5)
+    df["estimated_occupancy_l365d"] = rep.blank(occ, (occ < 0) | (occ > 365), "occ_range", t, "estimated_occupancy_l365d", True)
+    rev = to_money(df["estimated_revenue_l365d"])  # (6)
+    df["estimated_revenue_l365d"] = rep.blank(rev, rev < 0, "rev_negative", t, "estimated_revenue_l365d", True)
+    n = to_int(df["number_of_reviews"])  # (7)
+    df["number_of_reviews"] = rep.blank(n, n < 0, "reviews_neg", t, "number_of_reviews")
+    lat, lon = to_float(df["latitude"]), to_float(df["longitude"])  # (8)
+    df["latitude"] = lat = rep.blank(lat, lat.abs() > 90, "coord_range", t, "latitude")
+    df["longitude"] = lon = rep.blank(lon, lon.abs() > 180, "coord_range", t, "longitude")
+    b = boxes.reindex(df["analysis_area"]).set_axis(df.index)
+    inbox = (lon >= b.lon_min) & (lon <= b.lon_max) & (lat >= b.lat_min) & (lat <= b.lat_max)
+    rep.flag(df, "flag_outside_area", ~inbox & lat.notna() & lon.notna() & b.lon_min.notna(), "coord_box", t, "latitude,longitude")
+    rt = df["room_type"].value_counts()  # so với qa.expected
+    rep.expect(t, "row_count", len(df), "listings")
+    rep.expect(t, "entire_home", rt.get("Entire home/apt", 0))
+    rep.expect(t, "private_room", rt.get("Private room", 0))
+    rep.expect(t, "zero_reviews", df["number_of_reviews"].eq(0).sum())
+    rep.expect(t, "missing_price", df["price"].isna().sum())
+    for a, k in df["analysis_area"].value_counts().items():
+        rep.expect(t, f"area_size:{a}", k, "area_size")
+    return df
+
+
+def clean_reviews(df, ids, lids, sheet_lid, rep):
+    t = "reviews"
+    df = prep(df, ids, t, rep)[["id", "listing_id", "date", "comments"]].assign(snapshot=rep.snap)
+    df["listing_id"] = to_int(df["listing_id"])  # (9)
+    rep.flag(df, "flag_orphan", ~df["listing_id"].isin(lids), "orphan", t, "listing_id")
+    differs = (df["listing_id"] != df["id"].map(sheet_lid)) | df["listing_id"].isna()
+    rep.flag(df, "flag_listing_mismatch", differs, "id_mismatch", t, "listing_id")
+    c = df["comments"].str.strip()  # (10)
+    rep.log("comment_empty", t, "comments", (c == "").sum())
+    df["comments"] = c.where(c != "")
+    rep.flag(df, "flag_encoding", df["comments"].str.contains(ENC, na=False), "encoding", t, "comments")
+    rep.expect(t, "row_count", len(df), "reviews")
+    return df
+
+
+def survey_calendar(path, lids, rep):
+    """Khảo sát calendar: số dòng/cột cả thành phố, số dòng của nhóm, listing thiếu và listing không đủ 365 ngày."""
+    t, ids, total, kept = "calendar", set(map(str, lids)), 0, []
+    ncols = len(pd.read_csv(path, nrows=0).columns)
+    for c in pd.read_csv(path, dtype=str, na_filter=False, usecols=["listing_id", "date"], chunksize=1_000_000):
+        total += len(c)
+        kept.append(c[c["listing_id"].str.strip().isin(ids)])
+    df = pd.concat(kept, ignore_index=True)
+    rep.log("structure", t, "(rows)", total, "rows")
+    rep.log("structure", t, "(columns)", ncols, "columns")
+    days = df.groupby("listing_id")["date"].nunique()
+    rep.log("ids_missing", t, "listing_id", len(ids - set(days.index)))
+    rep.log("cal_days", t, "date", (days != 365).sum())
+    rep.expect(t, "row_count", len(df), "calendar")
+
+
+def main(config_path):
+    with open(config_path, encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+    root, qa, refs = cfg["data_root"].strip("/ "), cfg["qa"], load_refs(cfg)
+    L, R, V = refs["listing"], refs["review"], refs["area"]
+    lid, rid, r_lid = to_int(L["listing_id"]), to_int(R["review_id"]), to_int(R["listing_id"])
+    lids, rids = set(lid), set(rid)
+    boxes = V.set_index("analysis_area")[["lon_min", "lat_min", "lon_max", "lat_max"]].astype(float)
+    rep, lis, rev = Report(qa["expected"]), [], []
+    for snap in map(str, cfg["snapshots"]):
+        rep.snap = snap
+        raw = read(build_path(root, snap, "listings.csv.gz"), set(lid.astype(str)), "listings", rep)
+        lis.append(clean_listings(raw, lids, dict(zip(lid, L["analysis_area"])), boxes, rep))
+        raw = read(build_path(root, snap, "reviews.csv.gz"), set(rid.astype(str)), "reviews", rep,
+                   usecols=["listing_id", "id", "date", "comments"])
+        rev.append(clean_reviews(raw, rids, lids, dict(zip(rid, r_lid)), rep))
+        survey_calendar(build_path(root, snap, "calendar.csv.gz"), lids, rep)
+    rep.snap = "all"  # bước cần nhìn mọi mốc cùng lúc
+    listings, reviews = pd.concat(lis, ignore_index=True), pd.concat(rev, ignore_index=True).sort_values(["snapshot", "id"], kind="stable")
+    by = [listings["snapshot"], listings["room_type"]]  # tứ phân vị theo từng mốc: một listing không bị đếm 4 lần
+    for col, name in (("price", "flag_price_outlier"), ("estimated_revenue_l365d", "flag_revenue_outlier")):
+        rep.flag(listings, name, iqr_flag(listings[col].where(listings[col] != 0), by, qa["iqr_k"]), "outlier", "listings", col, x=listings[col])
+    n, reviews = len(reviews), reviews.drop_duplicates("id", keep="last")
+    rep.log("dup_snapshot", "reviews", "id", n - len(reviews))
+    out = ROOT / "data" / "processed"
+    listings.to_csv(out / "listings_clean.csv", index=False)
+    reviews.to_csv(out / "reviews_clean.csv", index=False)
+    for table, parts in rep.rejected.items():
+        pd.concat(parts).to_csv(out / f"rejected_{table}.csv", index=False)
+    (ROOT / "reports").mkdir(exist_ok=True)
+    report = pd.DataFrame(rep.rows)
+    report.to_csv(ROOT / "reports" / "qa_report.csv", index=False, encoding="utf-8-sig")
+    print(f"listings: {len(listings)}, reviews: {len(reviews)}; kỳ vọng sai: {(report.status == 'error').sum()} -> reports/qa_report.csv")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Clean snapshots and write check_<ma_du_lieu>.csv.")
-    parser.add_argument("--config", required=True, help="e.g. configs/cape_town.yaml")
-    parser.add_argument("--code", help="ma_du_lieu from the 'Phân công' sheet (default: config ma_du_lieu, else city)")
-    args = parser.parse_args()
-    sys.exit(run(load_config(args.config), args.code))
+    main(sys.argv[1] if len(sys.argv) > 1 else "configs/cape_town.yaml")
