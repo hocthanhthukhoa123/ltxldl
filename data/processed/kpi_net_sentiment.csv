@@ -26,3 +26,4 @@ net_sentiment,all,neighbourhood_cleansed,Ward 71,,1.0,10,,1.0,1.0
 net_sentiment,all,neighbourhood_cleansed,Ward 74,,0.9623,53,,0.8919,1.0
 net_sentiment,all,neighbourhood_cleansed,Ward 77,,0.9341,91,,0.8865,0.9851
 net_sentiment,all,neighbourhood_cleansed,Ward 84,,1.0,13,,1.0,1.0
+net_sentiment,all,all,all,,0.876,1000,,0.8458,0.9051

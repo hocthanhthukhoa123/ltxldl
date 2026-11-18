@@ -86,10 +86,12 @@ keep the code as short as under 50 lines
 **Prompt then chốt:**
 - "đọc repo git này (bài cuối kì của nhóm 4) và phân tích lỗi cũng như là các việc cần làm" (rà soát toàn repo).
 - "run_pipeline.py: it doesn't exist yet, and it's required. README: it must match the new commands. and fix all detected problems" (dẫn tới các thay đổi dưới đây).
+- Gửi ảnh mẫu 5 biểu đồ KPI của nhóm và công thức nhóm màu doanh thu cho KPI 5 (dẫn tới bản `viz.py` hiện tại).
 
 **Thay đổi theo từng tệp:**
 - `run_pipeline.py` (mới): một lệnh chạy 7 bước, nạp `.env`, có `--skip-llm`, `--from`, `--only`, dừng khi một bước lỗi.
-- `src/viz.py` (viết lại): 8 hình cho 5 KPI mới và kết quả đánh giá; bảng màu đã kiểm tra mù màu.
+- `src/viz.py` (viết lại): 5 hình KPI theo đúng dạng biểu đồ nhóm chọn (heatmap ngủ đông, hai biểu đồ chấm nối cho giá và doanh thu, cảm xúc ròng kèm thành phần nhãn, bubble cho số đêm có khách với nhóm màu D = (Tmax − Tmin)/3) và 1 hình LLM vs baseline; bảng màu đã kiểm tra mù màu, nền sáng.
+- `src/kpi.py`: KPI giá có thêm mức mọi loại phòng (`room_type = all`) bên cạnh từng loại phòng, vì hình của nhóm dùng mức này; net sentiment có thêm dòng toàn mẫu.
 - `src/qa.py`: khảo sát cấu trúc cả 3 tệp (số dòng/cột, calendar đủ 365000 dòng và 365 ngày/listing); sắp xếp ổn định (`kind="stable"`) để `reviews_clean.csv` giống hệt nhau mỗi lần chạy; cờ ngoại lai IQR tính theo mốc × loại phòng (trước đây gộp 4 mốc, một listing bị đếm 4 lần).
 - `src/llm.py`: thêm `--skip-llm`; ước tính chi phí không còn bắt buộc phải có tệp thô.
 - `src/kpi.py`: net sentiment có CI 95% bằng bootstrap theo cụm listing.
@@ -98,5 +100,7 @@ keep the code as short as under 50 lines
 **AI sai ở đâu (ví dụ thật):**
 - Bản `viz.py` đầu tiên đặt nhãn khu vực ở góc hộp; vì các hộp chồng nhau, nhãn A05/A06/A07 đè lên nhau, A05 bị che mất. Phát hiện khi mở ảnh; đã sửa: nhãn đặt ở trung vị toạ độ listing, nhãn sát nhau được đẩy ra và nối bằng đường dẫn.
 - Hình doanh thu ban đầu vẽ 3 mốc trên cùng một hàng; A07/A08 có doanh thu 03/2026 gần bằng 06/2026 nên chấm sau che mất chấm trước, trông như thiếu dữ liệu. Đã kiểm tra lại `kpi_median_revenue.csv` (đủ số liệu) rồi sửa: lệch dọc theo mốc và dùng hình dấu khác nhau.
+
+- Khi nhóm gửi công thức ngưỡng KPI 5, cận trên nhóm 2 ban đầu được viết là Tmax + D (khiến nhóm 3 luôn rỗng). Claude hỏi lại thay vì tự sửa; nhóm xác nhận cận đúng là Tmax − D.
 
 **Kiểm chứng:** clone mới nhánh, cài `requirements.txt` trên Python 3.12, chạy `python run_pipeline.py` hai lần và so sánh tệp kết quả (giống hệt nhau); số liệu kỳ vọng của QA đều `ok`; mở từng hình để kiểm tra chữ đè và dữ liệu thiếu. Prompt LLM không bị sửa (cache vẫn khớp, không gọi lại API) và không chỉnh gì dựa trên 100 nhãn tay.

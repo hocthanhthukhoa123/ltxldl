@@ -61,7 +61,7 @@ Lệnh này chạy lần lượt 7 bước dưới đây. Dữ liệu thô (kho�
 | 4 | `src/baseline.py` | Đối chứng không dùng LLM: VADER và luật ngưỡng cố định | `baseline_results.csv` |
 | 5 | `src/kpi.py` | 5 KPI theo khu vực và phường | `kpi_*.csv` |
 | 6 | `src/evaluate.py` | Chấm LLM, baseline và mức sàn trên 100 nhãn tay (bootstrap CI) | `eval_metrics.csv`, `eval_confusion.csv`, `eval_errors.csv` |
-| 7 | `src/viz.py` | Vẽ 8 hình cho báo cáo | `figures/fig1_*.png` … `fig8_*.png` |
+| 7 | `src/viz.py` | Vẽ 5 hình KPI (đúng dạng nhóm chọn) và 1 hình đánh giá LLM | `figures/fig1_*.png` … `fig6_*.png` |
 
 Tuỳ chọn hay dùng:
 
@@ -96,21 +96,29 @@ Mọi tham số nằm trong `configs/cape_town.yaml`:
 | Đối chứng | `data/processed/baseline_results.csv` |
 | KPI | `data/processed/kpi_hibernation_rate.csv`, `kpi_median_price.csv`, `kpi_median_revenue.csv`, `kpi_median_occupied_nights.csv`, `kpi_net_sentiment.csv` |
 | Đánh giá | `data/processed/eval_metrics.csv`, `eval_confusion.csv`, `eval_errors.csv` |
-| Hình | `figures/fig1_price_map.png` … `figures/fig8_confusion.png` |
+| Hình | `figures/fig1_hibernation_heatmap.png` (KPI 1), `fig2_median_price.png` (KPI 2), `fig3_median_revenue.png` (KPI 3), `fig4_net_sentiment.png` (KPI 4), `fig5_occupied_nights_bubble.png` (KPI 5), `fig6_llm_vs_baseline.png` (đánh giá LLM) |
 
 Chạy lại pipeline trên bản clone mới cho ra đúng các tệp này (thứ tự dòng cố định). `git status` sau khi chạy chỉ được thấy `data/raw/` bị bỏ qua.
 
-## Định nghĩa KPI
+## Định nghĩa KPI và biểu đồ
 
 Mọi KPI được tính theo `analysis_area` (A01–A08) và `neighbourhood_cleansed`. Nhóm có dưới 10 quan sát thì không báo cáo.
 
-| KPI | Mốc | Công thức |
-|---|---|---|
-| Hibernation rate | cả 4 | số listing có `estimated_occupancy_l365d = 0` / số listing có giá trị occupancy |
-| Median price | 09/2025, 03/2026, 06/2026 | trung vị `price` khác rỗng, theo khu vực × loại phòng |
-| Median revenue per listing | 09/2025, 03/2026, 06/2026 | trung vị `estimated_revenue_l365d`, tính cả listing có doanh thu 0 |
-| Median occupied nights | cả 4 | trung vị `estimated_occupancy_l365d` trên các listing có occupancy > 0 |
-| Net sentiment | mẫu LLM | trung bình +1 (positive) / 0 (mixed) / −1 (negative) trên review có `status = ok`; kèm CI 95% bootstrap theo cụm listing |
+| KPI | Mốc | Công thức | Biểu đồ |
+|---|---|---|---|
+| 1. Tỉ lệ "ngủ đông" | cả 4 | số listing có `estimated_occupancy_l365d = 0` / số listing có giá trị occupancy | heatmap vùng × mốc |
+| 2. Giá trung vị theo khu vực | 09/2025, 03/2026, 06/2026 | trung vị `price` khác rỗng. `kpi_median_price.csv` có cả hai mức: mọi loại phòng (`room_type = all`, dùng cho hình) và từng loại phòng | chấm nối theo mốc, mỗi vùng một đường |
+| 3. Doanh thu ước tính mỗi listing mỗi năm | 09/2025, 03/2026, 06/2026 | trung vị `estimated_revenue_l365d`, tính cả listing có doanh thu 0 | chấm nối theo mốc, mỗi vùng một đường |
+| 4. Cảm xúc ròng theo khu vực (LLM) | mẫu LLM | trung bình +1 (positive) / 0 (mixed) / −1 (negative) trên review có `status = ok`; kèm CI 95% bootstrap theo cụm listing và một dòng toàn mẫu (`level = all`) | chấm + khoảng tin cậy, kèm thanh thành phần nhãn |
+| 5. Số đêm có khách trung vị (listing đang hoạt động) | cả 4 (hình dùng mốc mới nhất) | trung vị `estimated_occupancy_l365d` trên các listing có occupancy > 0 | bubble: x = số đêm, y = giá trung vị (mọi loại phòng), kích thước = doanh thu trung vị |
+
+**Nhóm màu doanh thu trong hình KPI 5.** Với T là doanh thu trung vị của vùng ở mốc mới nhất, D = (Tmax − Tmin) / 3:
+
+- nhóm 1: T < Tmin + D
+- nhóm 2: Tmin + D ≤ T ≤ Tmax − D
+- nhóm 3: T > Tmax − D
+
+Với số liệu mốc 2026-06-29, hai ngưỡng là khoảng 62,950 và 101,229 ZAR. Kết quả: A08, A04, A03 thuộc nhóm 1; A07, A01, A05 thuộc nhóm 2; A06, A02 thuộc nhóm 3. Hai đường nét đứt là trung vị toàn mẫu của số đêm có khách và của giá.
 
 ## Hạn chế đã biết (cần nêu trong báo cáo)
 

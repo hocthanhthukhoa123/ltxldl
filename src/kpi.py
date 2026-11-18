@@ -1,7 +1,8 @@
 """Tính 5 KPI theo vùng: python src/kpi.py configs/cape_town.yaml  (chạy sau llm.py)
 Vào: data/processed/{listings_clean,reviews_clean,llm_results}.csv. Ra: data/processed/kpi_<tên>.csv.
 Dạng dài: kpi, snapshot, level, group, room_type, value, n (số mẫu), currency (tỉ lệ lưu dạng 0-1);
-net_sentiment có thêm ci_lo, ci_hi: khoảng tin cậy 95% bằng bootstrap theo cụm listing (review cùng listing không độc lập)."""
+net_sentiment có thêm ci_lo, ci_hi: khoảng tin cậy 95% bằng bootstrap theo cụm listing (review cùng listing không độc lập),
+và một dòng level = "all" cho toàn mẫu. median_price có cả từng loại phòng và room_type = "all" (mọi loại phòng gộp)."""
 import sys
 
 import numpy as np
@@ -31,15 +32,22 @@ def agg(d, col, fn, by=(S,)):
 
 
 def cluster_ci(z, col, B, seed):
-    """CI 95% của trung bình `col` theo từng vùng, lấy mẫu lại listing (cả cụm review) B lần."""
+    """CI 95% của trung bình `col` theo từng vùng và toàn mẫu, lấy mẫu lại listing (cả cụm review) B lần."""
     rng, rows = np.random.default_rng(seed), []
-    for lvl in LEVELS:
+    z = z.assign(all="all")
+    for lvl in [*LEVELS, "all"]:
         for g, d in z.dropna(subset=[col, lvl]).groupby(lvl):
             s = d.groupby("listing_id")[col].agg(["sum", "count"])
             i = rng.integers(0, len(s), (B, len(s)))
             m = s["sum"].to_numpy()[i].sum(axis=1) / s["count"].to_numpy()[i].sum(axis=1)
             rows.append({"level": lvl, "group": g, **dict(zip(CI, np.percentile(m, [2.5, 97.5]).round(4)))})
     return pd.DataFrame(rows)
+
+
+def overall(d, col):
+    """Một dòng toàn mẫu (level = "all") cho KPI trung bình."""
+    d = d.dropna(subset=[col])
+    return pd.DataFrame([{"level": "all", "group": "all", "value": round(d[col].mean(), 4), "n": len(d)}])
 
 
 def main(config_path):
@@ -60,10 +68,11 @@ def main(config_path):
     z = z.join(info, on="listing_id").assign(score=lambda d: d["sentiment"].map(SCORE))
     kpis = {
         "hibernation_rate": agg(df, OCC, lambda s: (s == 0).mean()),  # tỉ lệ listing có occupancy = 0
-        "median_price": agg(sel, "price", "median", (S, "room_type")),
+        "median_price": pd.concat([agg(sel, "price", "median", (S, "room_type")),  # theo loại phòng
+                                   agg(sel, "price", "median").assign(room_type="all")]),  # mọi loại phòng gộp
         "median_revenue": agg(sel, REV, "median"),  # gồm cả listing doanh thu 0
         "median_occupied_nights": agg(df[df[OCC] > 0], OCC, "median"),
-        "net_sentiment": agg(z, "score", "mean", by=()).merge(
+        "net_sentiment": pd.concat([agg(z, "score", "mean", by=()), overall(z, "score")]).merge(
             cluster_ci(z, "score", cfg["eval"]["bootstrap"], cfg["seed"]), on=["level", "group"], how="left"),
     }
     for name, k in kpis.items():
