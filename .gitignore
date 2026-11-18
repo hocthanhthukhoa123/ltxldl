@@ -1,13 +1,14 @@
+# dữ liệu thô và tệp phân công (ID đã cache ở data/processed/refs/)
 data/raw/
+data/*.xlsx
+
+# môi trường và khoá
 .venv/
 .env
+
+# tệp sinh tự động
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
 scratch/
-__pycache__/
-*.pyc
-.venv/
-.env
-data/raw/
-data/*.xlsx
+.DS_Store

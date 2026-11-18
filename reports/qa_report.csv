@@ -1,4 +1,6 @@
 ﻿snapshot,rule,table,column,condition,reason,action,rows,metric,before,after,status
+2025-09-28,structure,listings,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,26877,rows,,,
+2025-09-28,structure,listings,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,79,columns,,,
 2025-09-28,key_null,listings,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
 2025-09-28,key_scope,listings,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,25877,rows,,,
 2025-09-28,dup_exact,listings,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
@@ -34,6 +36,8 @@
 2025-09-28,expected,listings,area_size:A08,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
 2025-09-28,expected,listings,area_size:A03,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
 2025-09-28,expected,listings,area_size:A04,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2025-09-28,structure,reviews,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,664377,rows,,,
+2025-09-28,structure,reviews,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,6,columns,,,
 2025-09-28,key_null,reviews,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
 2025-09-28,key_scope,reviews,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,659377,rows,,,
 2025-09-28,dup_exact,reviews,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
@@ -45,6 +49,13 @@
 2025-09-28,comment_empty,reviews,comments,comments rỗng sau khi cắt khoảng trắng,không có nội dung để phân tích,đổi thành NA,0,rows,,,
 2025-09-28,encoding,reviews,comments,"chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
 2025-09-28,expected,reviews,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",5000,expected_vs_actual,5000.0,5000.0,ok
+2025-09-28,structure,calendar,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,9810109,rows,,,
+2025-09-28,structure,calendar,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,7,columns,,,
+2025-09-28,ids_missing,calendar,listing_id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2025-09-28,cal_days,calendar,date,listing không có đủ 365 ngày khác nhau trong calendar,lịch thiếu hoặc lặp ngày,gắn cờ,0,rows,,,
+2025-09-28,expected,calendar,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",365000,expected_vs_actual,365000.0,365000.0,ok
+2025-12-29,structure,listings,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,23965,rows,,,
+2025-12-29,structure,listings,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,85,columns,,,
 2025-12-29,key_null,listings,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
 2025-12-29,key_scope,listings,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,22965,rows,,,
 2025-12-29,dup_exact,listings,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
@@ -80,6 +91,8 @@
 2025-12-29,expected,listings,area_size:A08,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
 2025-12-29,expected,listings,area_size:A03,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
 2025-12-29,expected,listings,area_size:A04,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2025-12-29,structure,reviews,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,650538,rows,,,
+2025-12-29,structure,reviews,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,6,columns,,,
 2025-12-29,key_null,reviews,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
 2025-12-29,key_scope,reviews,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,645538,rows,,,
 2025-12-29,dup_exact,reviews,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
@@ -91,6 +104,13 @@
 2025-12-29,comment_empty,reviews,comments,comments rỗng sau khi cắt khoảng trắng,không có nội dung để phân tích,đổi thành NA,0,rows,,,
 2025-12-29,encoding,reviews,comments,"chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
 2025-12-29,expected,reviews,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",5000,expected_vs_actual,5000.0,5000.0,ok
+2025-12-29,structure,calendar,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,8747272,rows,,,
+2025-12-29,structure,calendar,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,5,columns,,,
+2025-12-29,ids_missing,calendar,listing_id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2025-12-29,cal_days,calendar,date,listing không có đủ 365 ngày khác nhau trong calendar,lịch thiếu hoặc lặp ngày,gắn cờ,0,rows,,,
+2025-12-29,expected,calendar,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",365000,expected_vs_actual,365000.0,365000.0,ok
+2026-03-30,structure,listings,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,21900,rows,,,
+2026-03-30,structure,listings,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,90,columns,,,
 2026-03-30,key_null,listings,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
 2026-03-30,key_scope,listings,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,20900,rows,,,
 2026-03-30,dup_exact,listings,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
@@ -126,6 +146,8 @@
 2026-03-30,expected,listings,area_size:A08,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
 2026-03-30,expected,listings,area_size:A03,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
 2026-03-30,expected,listings,area_size:A04,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2026-03-30,structure,reviews,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,669859,rows,,,
+2026-03-30,structure,reviews,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,6,columns,,,
 2026-03-30,key_null,reviews,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
 2026-03-30,key_scope,reviews,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,664859,rows,,,
 2026-03-30,dup_exact,reviews,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
@@ -137,6 +159,13 @@
 2026-03-30,comment_empty,reviews,comments,comments rỗng sau khi cắt khoảng trắng,không có nội dung để phân tích,đổi thành NA,0,rows,,,
 2026-03-30,encoding,reviews,comments,"chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
 2026-03-30,expected,reviews,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",5000,expected_vs_actual,5000.0,5000.0,ok
+2026-03-30,structure,calendar,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,7993527,rows,,,
+2026-03-30,structure,calendar,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,5,columns,,,
+2026-03-30,ids_missing,calendar,listing_id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2026-03-30,cal_days,calendar,date,listing không có đủ 365 ngày khác nhau trong calendar,lịch thiếu hoặc lặp ngày,gắn cờ,0,rows,,,
+2026-03-30,expected,calendar,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",365000,expected_vs_actual,365000.0,365000.0,ok
+2026-06-29,structure,listings,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,27381,rows,,,
+2026-06-29,structure,listings,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,90,columns,,,
 2026-06-29,key_null,listings,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
 2026-06-29,key_scope,listings,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,26381,rows,,,
 2026-06-29,dup_exact,listings,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
@@ -173,6 +202,8 @@
 2026-06-29,expected,listings,area_size:A08,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",123,expected_vs_actual,120-130,123.0,ok
 2026-06-29,expected,listings,area_size:A04,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
 2026-06-29,expected,listings,area_size:A03,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",120,expected_vs_actual,120-130,120.0,ok
+2026-06-29,structure,reviews,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,760023,rows,,,
+2026-06-29,structure,reviews,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,6,columns,,,
 2026-06-29,key_null,reviews,id,khoá rỗng hoặc không phải số nguyên,không định danh được dòng,không đọc vào,0,rows,,,
 2026-06-29,key_scope,reviews,id,khoá không thuộc danh sách ID của nhóm,chỉ phân tích mẫu được giao,không đọc vào,755023,rows,,,
 2026-06-29,dup_exact,reviews,(all),trùng mọi cột trong cùng mốc,dòng lặp không thêm thông tin,"giữ 1 dòng, ghi rejected_*.csv",0,rows,,,
@@ -184,6 +215,11 @@
 2026-06-29,comment_empty,reviews,comments,comments rỗng sau khi cắt khoảng trắng,không có nội dung để phân tích,đổi thành NA,0,rows,,,
 2026-06-29,encoding,reviews,comments,"chứa dấu hiệu lỗi mã hoá (Ã, Â, â€, �)",văn bản có thể đã bị hỏng,gắn cờ,0,rows,,,
 2026-06-29,expected,reviews,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",5000,expected_vs_actual,5000.0,5000.0,ok
-all,outlier,listings,price,"log1p ngoài [Q1-k*IQR, Q3+k*IQR] theo room_type, chỉ tính giá trị khác 0 (bỏ qua khi IQR = 0)",giá trị cực đoan có thể là lỗi nhập,"gắn cờ, giữ giá trị",83,median,1670.0,1626.33,
-all,outlier,listings,estimated_revenue_l365d,"log1p ngoài [Q1-k*IQR, Q3+k*IQR] theo room_type, chỉ tính giá trị khác 0 (bỏ qua khi IQR = 0)",giá trị cực đoan có thể là lỗi nhập,"gắn cờ, giữ giá trị",1,median,66351.0,66402.0,
+2026-06-29,structure,calendar,(rows),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,9994036,rows,,,
+2026-06-29,structure,calendar,(columns),số dòng / số cột của tệp thô (cả thành phố),khảo sát cấu trúc từng tệp theo đề,ghi nhận,5,columns,,,
+2026-06-29,ids_missing,calendar,listing_id,ID có trong sheet nhưng không có trong mốc,mốc thiếu ID của nhóm,ghi nhận,0,rows,,,
+2026-06-29,cal_days,calendar,date,listing không có đủ 365 ngày khác nhau trong calendar,lịch thiếu hoặc lặp ngày,gắn cờ,0,rows,,,
+2026-06-29,expected,calendar,row_count,số liệu khác kỳ vọng trong qa.expected,lọc sai ID hoặc dữ liệu đổi,"ghi ok/error, không dừng",365000,expected_vs_actual,365000.0,365000.0,ok
+all,outlier,listings,price,"log1p ngoài [Q1-k*IQR, Q3+k*IQR] theo mốc x room_type, chỉ tính giá trị khác 0 (bỏ qua khi IQR = 0)",giá trị cực đoan có thể là lỗi nhập,"gắn cờ, giữ giá trị",90,median,1670.0,1624.0,
+all,outlier,listings,estimated_revenue_l365d,"log1p ngoài [Q1-k*IQR, Q3+k*IQR] theo mốc x room_type, chỉ tính giá trị khác 0 (bỏ qua khi IQR = 0)",giá trị cực đoan có thể là lỗi nhập,"gắn cờ, giữ giá trị",0,median,66351.0,66351.0,
 all,dup_snapshot,reviews,id,cùng review id ở nhiều mốc,đánh giá tích luỹ nên lặp giữa các mốc là bình thường,giữ mốc mới nhất,15000,rows,,,

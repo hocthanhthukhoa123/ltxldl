@@ -84,11 +84,11 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 11132560,Ward 54,Entire home/apt,2399.0,32,76768.0,16,-33.92198181152344,18.380510330200195,2025-09-28,False,A05,False,False,False,False
 11291760,Ward 71,Private room,1320.0,6,7920.0,5,-34.05734,18.44406,2025-09-28,False,A03,False,False,False,False
 11470397,Ward 62,Entire home/apt,2136.0,60,128160.0,91,-33.99678,18.4536,2025-09-28,False,A03,False,False,False,False
-11662930,Ward 54,Entire home/apt,12986.0,132,1714152.0,184,-33.93869,18.37951,2025-09-28,False,A02,False,False,False,False
+11662930,Ward 54,Entire home/apt,12986.0,132,1714152.0,184,-33.93869,18.37951,2025-09-28,False,A02,False,False,True,False
 11724374,Ward 61,Entire home/apt,5548.0,42,233016.0,17,-34.14505,18.32116,2025-09-28,False,A01,False,False,False,False
 11846724,Ward 62,Entire home/apt,1500.0,144,216000.0,121,-34.00752,18.43613,2025-09-28,False,A03,False,False,False,False
 12000956,Ward 71,Entire home/apt,1972.0,20,39440.0,9,-34.04379,18.43053,2025-09-28,False,A03,False,False,False,False
-12054768,Ward 54,Entire home/apt,12800.0,54,691200.0,68,-33.95792,18.37875,2025-09-28,False,A02,False,False,False,False
+12054768,Ward 54,Entire home/apt,12800.0,54,691200.0,68,-33.95792,18.37875,2025-09-28,False,A02,False,False,True,False
 12145776,Ward 54,Entire home/apt,965.0,126,121590.0,63,-33.92133,18.38407,2025-09-28,False,A05,False,False,False,False
 12160257,Ward 107,Entire home/apt,2454.0,136,333744.0,197,-33.83142,18.48242,2025-09-28,False,A07,False,False,False,False
 12200911,Ward 54,Entire home/apt,7500.0,176,1320000.0,164,-33.93035,18.38174,2025-09-28,False,A02,False,False,False,False
@@ -141,7 +141,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 18166413,Ward 115,Entire home/apt,3500.0,72,252000.0,135,-33.92075,18.42452,2025-09-28,False,A07,False,False,False,False
 18368527,Ward 54,Entire home/apt,3503.0,60,210180.0,56,-33.96423,18.37957,2025-09-28,False,A01,False,False,False,False
 18418048,Ward 115,Entire home/apt,2267.0,255,578085.0,456,-33.91254,18.41794,2025-09-28,False,A06,False,False,False,False
-18456013,Ward 64,Entire home/apt,13187.0,0,0.0,0,-34.14419,18.4318,2025-09-28,False,A03,False,False,False,False
+18456013,Ward 64,Entire home/apt,13187.0,0,0.0,0,-34.14419,18.4318,2025-09-28,False,A03,False,False,True,False
 18556521,Ward 77,Entire home/apt,4455.0,10,44550.0,5,-33.93407,18.4247,2025-09-28,False,A02,False,False,False,False
 18626279,Ward 115,Entire home/apt,4755.0,180,855900.0,289,-33.91032,18.4159,2025-09-28,False,A06,False,False,False,False
 19138137,Ward 59,Private room,1054.0,30,31620.0,18,-33.96023,18.46621,2025-09-28,False,A03,False,False,False,False
@@ -152,7 +152,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 19746250,Ward 64,Entire home/apt,990.0,8,7920.0,19,-34.1074,18.4685,2025-09-28,False,A03,False,False,False,False
 19917734,Ward 115,Entire home/apt,1091.0,0,0.0,37,-33.91843,18.42494,2025-09-28,False,A07,False,False,False,False
 19919246,Ward 64,Entire home/apt,3258.0,18,58644.0,31,-34.12651,18.44896,2025-09-28,False,A03,False,False,False,False
-20397595,Ward 107,Entire home/apt,12500.0,14,175000.0,20,-33.826866149902344,18.47995376586914,2025-09-28,False,A07,False,False,False,False
+20397595,Ward 107,Entire home/apt,12500.0,14,175000.0,20,-33.826866149902344,18.47995376586914,2025-09-28,False,A07,False,False,True,False
 20586557,Ward 62,Entire home/apt,4158.0,48,199584.0,45,-34.00838,18.42974,2025-09-28,False,A03,False,False,False,False
 20777870,Ward 54,Entire home/apt,10900.0,90,981000.0,71,-33.9625,18.37374,2025-09-28,False,A01,False,False,False,False
 20790887,Ward 69,Entire home/apt,7400.0,12,88800.0,47,-34.09911718759283,18.360220273590105,2025-09-28,False,A01,False,False,False,False
@@ -161,7 +161,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 21002488,Ward 55,Entire home/apt,35000.0,0,0.0,1,-33.886247,18.491308,2025-09-28,False,A07,False,False,True,False
 21078387,Ward 15,Entire home/apt,,0,,9,-34.06793,18.84465,2025-09-28,False,A04,False,False,False,False
 21238448,Ward 71,Entire home/apt,1317.0,42,55314.0,73,-34.03586,18.43156,2025-09-28,False,A03,False,False,False,False
-21430424,Ward 62,Entire home/apt,12720.0,14,178080.0,1,-33.9966,18.44623,2025-09-28,False,A03,False,False,False,False
+21430424,Ward 62,Entire home/apt,12720.0,14,178080.0,1,-33.9966,18.44623,2025-09-28,False,A03,False,False,True,False
 21444382,Ward 61,Entire home/apt,1352.0,24,32448.0,23,-34.15839,18.42722,2025-09-28,False,A01,False,False,False,False
 21453143,Ward 54,Private room,769.0,0,0.0,98,-33.91509,18.38947,2025-09-28,False,A05,False,False,False,False
 21494098,Ward 115,Entire home/apt,1192.0,36,42912.0,148,-33.92867,18.42208,2025-09-28,False,A02,False,False,False,False
@@ -199,7 +199,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 27537115,Ward 107,Entire home/apt,1994.0,24,47856.0,39,-33.81759,18.48936,2025-09-28,False,A07,False,False,False,False
 27826896,Ward 100,Private room,1920.0,24,46080.0,13,-34.16706,18.85683,2025-09-28,False,A04,False,False,False,False
 27970277,Ward 54,Entire home/apt,6166.0,60,369960.0,42,-33.93730164,18.37849998,2025-09-28,False,A02,False,False,False,False
-28075470,Ward 115,Entire home/apt,12350.0,18,222300.0,15,-33.90954,18.41843,2025-09-28,False,A06,False,False,False,False
+28075470,Ward 115,Entire home/apt,12350.0,18,222300.0,15,-33.90954,18.41843,2025-09-28,False,A06,False,False,True,False
 28155493,Ward 54,Entire home/apt,4115.0,150,617250.0,100,-33.94236,18.37895,2025-09-28,False,A02,False,False,False,False
 28176389,Ward 74,Entire home/apt,4640.0,28,129920.0,8,-34.04153,18.36256,2025-09-28,False,A01,False,False,False,False
 28878063,Ward 64,Entire home/apt,2018.0,12,24216.0,25,-34.107868,18.470289,2025-09-28,False,A04,False,False,False,False
@@ -797,7 +797,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 1254957063948460287,Ward 1,Private room,759.0,6,4554.0,1,-33.86905310020564,18.587778934493393,2025-09-28,False,A08,False,False,False,False
 1255955313039968020,Ward 115,Private room,1588.0,255,404940.0,76,-33.92893055824727,18.424226234813805,2025-09-28,False,A02,False,False,False,False
 1256216705095525310,Ward 54,Entire home/apt,649.0,66,42834.0,11,-33.910141338681136,18.394804017049882,2025-09-28,False,A05,False,False,False,False
-1257880337668928599,Ward 74,Entire home/apt,12908.0,18,232344.0,3,-34.007899,18.3424727,2025-09-28,False,A01,False,False,False,False
+1257880337668928599,Ward 74,Entire home/apt,12908.0,18,232344.0,3,-34.007899,18.3424727,2025-09-28,False,A01,False,False,True,False
 1259180811154363524,Ward 54,Entire home/apt,1499.0,66,98934.0,11,-33.9173083,18.388356,2025-09-28,False,A05,False,False,False,False
 1263658461196930695,Ward 115,Entire home/apt,1225.0,12,14700.0,2,-33.919423012162696,18.419855779074847,2025-09-28,False,A06,False,False,False,False
 1263781666780700058,Ward 62,Entire home/apt,,18,,3,-34.01806848738026,18.430737883629938,2025-09-28,False,A03,False,False,False,False
@@ -909,7 +909,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 1359281695662977642,Ward 54,Entire home/apt,1389.0,12,16668.0,2,-33.915022,18.392077,2025-09-28,False,A05,False,False,False,False
 1359443304721306878,Ward 54,Entire home/apt,1306.0,0,0.0,0,-33.915022,18.392077,2025-09-28,False,A05,False,False,False,False
 1359460075266314469,Ward 54,Entire home/apt,1541.0,24,36984.0,4,-33.915022,18.392077,2025-09-28,False,A05,False,False,False,False
-1359999631622969523,Ward 71,Entire home/apt,491.0,6,2946.0,1,-34.079409795982784,18.454282425279885,2025-09-28,False,A03,False,False,False,True
+1359999631622969523,Ward 71,Entire home/apt,491.0,6,2946.0,1,-34.079409795982784,18.454282425279885,2025-09-28,False,A03,False,False,False,False
 1360219183660570284,Ward 115,Entire home/apt,1353.0,24,32472.0,4,-33.9069,18.4047,2025-09-28,False,A05,False,False,False,False
 1361261935260754128,Ward 54,Entire home/apt,1492.0,48,71616.0,8,-33.915022,18.392077,2025-09-28,False,A05,False,False,False,False
 1367874848985702298,Ward 113,Private room,649.0,24,15576.0,4,-33.8248648,18.5135551,2025-09-28,False,A08,False,False,False,False
@@ -926,7 +926,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 1385348447481619494,Ward 115,Entire home/apt,1889.0,36,68004.0,6,-33.9150133,18.4190588,2025-09-28,False,A06,False,False,False,False
 1385508426177825078,Ward 113,Entire home/apt,1616.0,6,9696.0,1,-33.82978077137228,18.51400633510164,2025-09-28,False,A08,False,False,False,False
 1385665358986032297,Ward 23,Entire home/apt,1850.0,18,33300.0,3,-33.8133546,18.4728684,2025-09-28,False,A07,False,False,False,False
-1390392819972705827,Ward 69,Entire home/apt,12215.0,0,0.0,0,-34.0992777334803,18.360976296768307,2025-09-28,False,A01,False,False,False,False
+1390392819972705827,Ward 69,Entire home/apt,12215.0,0,0.0,0,-34.0992777334803,18.360976296768307,2025-09-28,False,A01,False,False,True,False
 1390463989771698773,Ward 115,Entire home/apt,1190.0,6,7140.0,1,-33.9263349,18.4459834,2025-09-28,False,A03,False,False,False,False
 1393185768788964080,Ward 54,Entire home/apt,7740.0,18,139320.0,3,-33.909986124836166,18.39528999971836,2025-09-28,False,A05,False,False,False,False
 1394055843591612236,Ward 115,Entire home/apt,751.0,60,45060.0,10,-33.9201253,18.4238677,2025-09-28,False,A07,False,False,False,False
@@ -2125,7 +2125,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 16704173,Ward 61,Entire home/apt,2850.0,72,205200.0,116,-34.19994,18.37779,2026-03-30,False,A01,False,False,False,False
 16938059,Ward 71,Entire home/apt,6983.0,24,167592.0,40,-34.03854,18.42787,2026-03-30,False,A01,False,False,False,False
 17137459,Ward 77,Entire home/apt,1605.26,114,183000.0,67,-33.9417,18.42871,2026-03-30,False,A02,False,False,False,False
-16377753,Ward 54,Entire home/apt,13625.67,6,81754.0,7,-33.92293,18.37785,2026-03-30,False,A05,False,False,True,False
+16377753,Ward 54,Entire home/apt,13625.67,6,81754.0,7,-33.92293,18.37785,2026-03-30,False,A05,False,False,False,False
 17631077,Ward 61,Entire home/apt,1409.5,0,0.0,62,-34.16915160785133,18.428769841800516,2026-03-30,False,A01,False,False,False,False
 17694944,Ward 62,Entire home/apt,2853.0,6,17118.0,11,-34.033215209718264,18.43023818261657,2026-03-30,False,A03,False,False,False,False
 17723213,Ward 58,Entire home/apt,1381.0,30,41430.0,45,-33.98043,18.4831,2026-03-30,False,A04,False,False,False,False
@@ -2210,7 +2210,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 30688174,Ward 54,Entire home/apt,4336.57,0,0.0,2,-33.9243049621582,18.382783889770508,2026-03-30,False,A05,False,False,False,False
 30752423,Ward 74,Private room,1199.0,255,305745.0,349,-34.045952,18.34708,2026-03-30,False,A01,False,False,False,False
 30756877,Ward 23,Entire home/apt,1954.5,84,164178.0,25,-33.8029012,18.4623129,2026-03-30,False,A07,False,False,False,False
-31126830,Ward 115,Entire home/apt,293.92,0,0.0,20,-33.91678,18.42748,2026-03-30,False,A07,False,False,False,False
+31126830,Ward 115,Entire home/apt,293.92,0,0.0,20,-33.91678,18.42748,2026-03-30,False,A07,False,False,True,False
 31217655,Ward 69,Entire home/apt,2938.75,16,47020.0,50,-34.1104,18.38402,2026-03-30,False,A01,False,False,False,False
 31219941,Ward 54,Entire home/apt,4936.0,36,177696.0,40,-33.90975,18.39087,2026-03-30,False,A05,False,False,False,False
 31322736,Ward 4,Entire home/apt,1182.0,30,35460.0,23,-33.85246,18.49424,2026-03-30,False,A08,False,False,False,False
@@ -2237,7 +2237,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 33481330,Ward 64,Entire home/apt,1426.67,0,0.0,7,-34.14278,18.43188,2026-03-30,False,A03,False,False,False,False
 33575904,Ward 107,Entire home/apt,1500.0,96,144000.0,80,-33.83146,18.48212,2026-03-30,False,A07,False,False,False,False
 33584130,Ward 115,Entire home/apt,2310.89,66,152519.0,72,-33.91059,18.41362,2026-03-30,False,A06,False,False,False,False
-33602427,Ward 61,Entire home/apt,13470.5,144,1939752.0,162,-34.185371149372,18.36358783877966,2026-03-30,False,A01,False,False,True,False
+33602427,Ward 61,Entire home/apt,13470.5,144,1939752.0,162,-34.185371149372,18.36358783877966,2026-03-30,False,A01,False,False,False,False
 33615831,Ward 54,Entire home/apt,6837.5,42,287175.0,54,-33.9375,18.3784008,2026-03-30,False,A02,False,False,False,False
 33815929,Ward 69,Entire home/apt,1028.5,192,197472.0,247,-34.09787,18.38864,2026-03-30,False,A01,False,False,False,False
 34082173,Ward 70,Entire home/apt,873.0,54,47142.0,147,-33.86661,18.60908,2026-03-30,False,A08,False,False,False,False
@@ -2713,7 +2713,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 1107156056221939388,Ward 1,Private room,875.0,0,0.0,1,-33.88679,18.56366,2026-03-30,False,A08,False,False,False,False
 1107966985427263451,Ward 115,Entire home/apt,1531.5,12,18378.0,24,-33.9182604,18.4179181,2026-03-30,False,A06,False,False,False,False
 1133798295821280552,Ward 23,Entire home/apt,,0,,1,-33.8167946,18.475015,2026-03-30,False,A07,False,False,False,False
-1134767150938561789,Ward 74,Entire home/apt,13694.5,12,164334.0,2,-34.02657803994054,18.36967175783637,2026-03-30,False,A01,False,False,True,False
+1134767150938561789,Ward 74,Entire home/apt,13694.5,12,164334.0,2,-34.02657803994054,18.36967175783637,2026-03-30,False,A01,False,False,False,False
 1136351454508015337,Ward 115,Entire home/apt,2388.0,255,608940.0,88,-33.9128407,18.4183492,2026-03-30,False,A06,False,False,False,False
 1137755043233482697,Ward 77,Entire home/apt,1170.0,54,63180.0,22,-33.929538314827646,18.40173953372954,2026-03-30,False,A02,False,False,False,False
 1140688804527727563,Ward 15,Entire home/apt,856.0,12,10272.0,15,-34.0618726,18.8175286,2026-03-30,False,A04,False,False,False,False
@@ -2841,7 +2841,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 1291012824088618532,Ward 59,Entire home/apt,9757.33,24,234176.0,4,-33.97567,18.46083,2026-03-30,False,A03,False,False,False,False
 1292010898478935460,Ward 74,Entire home/apt,3205.5,84,269262.0,14,-34.045833,18.358417,2026-03-30,False,A01,False,False,False,False
 1292687862016174036,Ward 85,Entire home/apt,3138.5,30,94155.0,11,-34.12578,18.83404,2026-03-30,False,A04,False,False,False,False
-1278247524371041227,Ward 64,Entire home/apt,13694.33,36,492996.0,8,-34.11912658135301,18.45598873896904,2026-03-30,False,A03,False,False,True,False
+1278247524371041227,Ward 64,Entire home/apt,13694.33,36,492996.0,8,-34.11912658135301,18.45598873896904,2026-03-30,False,A03,False,False,False,False
 1295095368147935289,Ward 77,Entire home/apt,3195.3,240,766872.0,46,-33.918034437865074,18.41379839926958,2026-03-30,False,A06,False,False,False,False
 1278650910928437087,Ward 74,Entire home/apt,5381.0,12,64572.0,8,-34.00929,18.34198,2026-03-30,False,A01,False,False,False,False
 1278746473658611400,Ward 71,Entire home/apt,4526.43,14,63370.0,2,-34.05219983484852,18.457087919573993,2026-03-30,False,A03,False,False,False,False
@@ -3577,7 +3577,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 905230997382704888,Ward 115,Private room,457.0,0,0.0,3,-33.9280777351882,18.461110219359398,2026-06-29,False,A03,False,False,False,False
 909840661056482727,Ward 61,Private room,1450.0,12,17400.0,3,-34.1639782,18.4303805,2026-06-29,False,A03,False,False,False,False
 913545826306546773,Ward 69,Entire home/apt,5500.0,0,0.0,2,-34.0972509189465,18.379273004829884,2026-06-29,False,A01,False,False,False,False
-916620334221966960,Ward 54,Entire home/apt,13318.67,18,239736.0,7,-33.93658997657133,18.379579447209835,2026-06-29,False,A02,False,False,False,False
+916620334221966960,Ward 54,Entire home/apt,13318.67,18,239736.0,7,-33.93658997657133,18.379579447209835,2026-06-29,False,A02,False,False,True,False
 922286413307503186,Ward 54,Entire home/apt,3916.0,174,681384.0,98,-33.91131490055114,18.39834027855425,2026-06-29,False,A05,False,False,False,False
 924410298080441488,Ward 23,Entire home/apt,1900.0,6,11400.0,2,-33.80954,18.46958,2026-06-29,False,A07,False,False,False,False
 928688975177792136,Ward 23,Entire home/apt,795.0,42,33390.0,19,-33.7156678,18.4443193,2026-06-29,False,A07,False,False,False,False
@@ -3713,7 +3713,7 @@ id,neighbourhood_cleansed,room_type,price,estimated_occupancy_l365d,estimated_re
 1120206723444106391,Ward 115,Private room,2283.0,0,0.0,0,-33.919422940953666,18.41924329131028,2026-06-29,False,A06,False,False,False,False
 1065736366035051103,Ward 113,Entire home/apt,1495.0,18,26910.0,9,-33.8220445,18.4967854,2026-06-29,False,A08,False,False,False,False
 1133798295821280552,Ward 23,Entire home/apt,1850.0,0,0.0,1,-33.8167946,18.475015,2026-06-29,False,A07,False,False,False,False
-1134767150938561789,Ward 74,Entire home/apt,13000.0,12,156000.0,2,-34.02657803994054,18.36967175783637,2026-06-29,False,A01,False,False,False,False
+1134767150938561789,Ward 74,Entire home/apt,13000.0,12,156000.0,2,-34.02657803994054,18.36967175783637,2026-06-29,False,A01,False,False,True,False
 1136351454508015337,Ward 115,Entire home/apt,1498.0,255,381990.0,102,-33.9128407,18.4183492,2026-06-29,False,A06,False,False,False,False
 1066327778351299278,Ward 83,Entire home/apt,1024.44,78,79906.0,22,-34.10627,18.82051,2026-06-29,False,A04,False,False,False,False
 1137755043233482697,Ward 77,Entire home/apt,1170.0,48,56160.0,23,-33.929538314827646,18.40173953372954,2026-06-29,False,A02,False,False,False,False

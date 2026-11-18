@@ -1,8 +1,10 @@
 """Tính 5 KPI theo vùng: python src/kpi.py configs/cape_town.yaml  (chạy sau llm.py)
 Vào: data/processed/{listings_clean,reviews_clean,llm_results}.csv. Ra: data/processed/kpi_<tên>.csv.
-Dạng dài: kpi, snapshot, level, group, room_type, value, n (số mẫu), currency (tỉ lệ lưu dạng 0-1)."""
+Dạng dài: kpi, snapshot, level, group, room_type, value, n (số mẫu), currency (tỉ lệ lưu dạng 0-1);
+net_sentiment có thêm ci_lo, ci_hi: khoảng tin cậy 95% bằng bootstrap theo cụm listing (review cùng listing không độc lập)."""
 import sys
 
+import numpy as np
 import pandas as pd
 import yaml
 
@@ -11,6 +13,7 @@ from download import ROOT
 S, OCC, REV = "snapshot", "estimated_occupancy_l365d", "estimated_revenue_l365d"
 LEVELS = ["analysis_area", "neighbourhood_cleansed"]  # cấp vùng: khu vực được giao và phường
 COLS = ["kpi", S, "level", "group", "room_type", "value", "n", "currency"]
+CI = ["ci_lo", "ci_hi"]
 SCORE = {"positive": 1, "mixed": 0, "negative": -1}
 PRICE_MONTHS = ["09", "03", "06"]  # KPI giá và doanh thu chỉ lấy các mốc tháng 9, 3, 6
 MIN_N = 10  # nhóm ít hơn MIN_N quan sát thì không báo cáo (trung vị/tỉ lệ quá nhiễu)
@@ -25,6 +28,18 @@ def agg(d, col, fn, by=(S,)):
         parts.append(t.rename(columns={lvl: "group"}).assign(level=lvl))
     out = pd.concat(parts)
     return out[out["n"] >= MIN_N]
+
+
+def cluster_ci(z, col, B, seed):
+    """CI 95% của trung bình `col` theo từng vùng, lấy mẫu lại listing (cả cụm review) B lần."""
+    rng, rows = np.random.default_rng(seed), []
+    for lvl in LEVELS:
+        for g, d in z.dropna(subset=[col, lvl]).groupby(lvl):
+            s = d.groupby("listing_id")[col].agg(["sum", "count"])
+            i = rng.integers(0, len(s), (B, len(s)))
+            m = s["sum"].to_numpy()[i].sum(axis=1) / s["count"].to_numpy()[i].sum(axis=1)
+            rows.append({"level": lvl, "group": g, **dict(zip(CI, np.percentile(m, [2.5, 97.5]).round(4)))})
+    return pd.DataFrame(rows)
 
 
 def main(config_path):
@@ -48,10 +63,12 @@ def main(config_path):
         "median_price": agg(sel, "price", "median", (S, "room_type")),
         "median_revenue": agg(sel, REV, "median"),  # gồm cả listing doanh thu 0
         "median_occupied_nights": agg(df[df[OCC] > 0], OCC, "median"),
-        "net_sentiment": agg(z, "score", "mean", by=()),
+        "net_sentiment": agg(z, "score", "mean", by=()).merge(
+            cluster_ci(z, "score", cfg["eval"]["bootstrap"], cfg["seed"]), on=["level", "group"], how="left"),
     }
     for name, k in kpis.items():
-        k = k.assign(kpi=name, currency=cur if name in MONEY else "", **{S: k.get(S, "all")}).reindex(columns=COLS)
+        cols = COLS + [c for c in CI if c in k]
+        k = k.assign(kpi=name, currency=cur if name in MONEY else "", **{S: k.get(S, "all")}).reindex(columns=cols)
         k.to_csv(proc / f"kpi_{name}.csv", index=False)
         print(f"kpi_{name}.csv: {len(k)} dòng")
 

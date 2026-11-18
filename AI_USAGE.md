@@ -79,3 +79,24 @@ keep the code as short as under 50 lines
 - Cho AI chạy thử trên dữ liệu giả có cài sẵn lỗi (dòng trùng, khoá rỗng, giá "N/A", occupancy > 365, doanh thu âm, toạ độ ngoài hộp, lỗi mã hoá): bắt được lỗi 1 và 2 ở trên.
 - Tự gán 100 nhãn tay (không dùng AI) rồi chấm LLM và baseline VADER, kèm khoảng tin cậy bootstrap.
 - Khi AI khẳng định điều gì về đề bài, đối chiếu lại với trang đề.
+## Đợt rà soát 18/11/2026 (Claude, claude.ai)
+
+**Công cụ, vào việc gì:** Claude đọc toàn repo (cả 3 nhánh), chạy lại pipeline trên bản clone mới, liệt kê lỗi; sau đó viết `run_pipeline.py`, viết lại `src/viz.py`, sửa `qa.py`, `llm.py`, `kpi.py`, `evaluate.py`, viết lại README.
+
+**Prompt then chốt:**
+- "đọc repo git này (bài cuối kì của nhóm 4) và phân tích lỗi cũng như là các việc cần làm" (rà soát toàn repo).
+- "run_pipeline.py: it doesn't exist yet, and it's required. README: it must match the new commands. and fix all detected problems" (dẫn tới các thay đổi dưới đây).
+
+**Thay đổi theo từng tệp:**
+- `run_pipeline.py` (mới): một lệnh chạy 7 bước, nạp `.env`, có `--skip-llm`, `--from`, `--only`, dừng khi một bước lỗi.
+- `src/viz.py` (viết lại): 8 hình cho 5 KPI mới và kết quả đánh giá; bảng màu đã kiểm tra mù màu.
+- `src/qa.py`: khảo sát cấu trúc cả 3 tệp (số dòng/cột, calendar đủ 365000 dòng và 365 ngày/listing); sắp xếp ổn định (`kind="stable"`) để `reviews_clean.csv` giống hệt nhau mỗi lần chạy; cờ ngoại lai IQR tính theo mốc × loại phòng (trước đây gộp 4 mốc, một listing bị đếm 4 lần).
+- `src/llm.py`: thêm `--skip-llm`; ước tính chi phí không còn bắt buộc phải có tệp thô.
+- `src/kpi.py`: net sentiment có CI 95% bằng bootstrap theo cụm listing.
+- `src/evaluate.py`: bootstrap macro-F1 cố định danh sách lớp (trước đây đổi theo từng lần lấy lại); hỗ trợ người gán thứ hai (`--make-second-sheet`, Cohen's kappa giữa hai người).
+
+**AI sai ở đâu (ví dụ thật):**
+- Bản `viz.py` đầu tiên đặt nhãn khu vực ở góc hộp; vì các hộp chồng nhau, nhãn A05/A06/A07 đè lên nhau, A05 bị che mất. Phát hiện khi mở ảnh; đã sửa: nhãn đặt ở trung vị toạ độ listing, nhãn sát nhau được đẩy ra và nối bằng đường dẫn.
+- Hình doanh thu ban đầu vẽ 3 mốc trên cùng một hàng; A07/A08 có doanh thu 03/2026 gần bằng 06/2026 nên chấm sau che mất chấm trước, trông như thiếu dữ liệu. Đã kiểm tra lại `kpi_median_revenue.csv` (đủ số liệu) rồi sửa: lệch dọc theo mốc và dùng hình dấu khác nhau.
+
+**Kiểm chứng:** clone mới nhánh, cài `requirements.txt` trên Python 3.12, chạy `python run_pipeline.py` hai lần và so sánh tệp kết quả (giống hệt nhau); số liệu kỳ vọng của QA đều `ok`; mở từng hình để kiểm tra chữ đè và dữ liệu thiếu. Prompt LLM không bị sửa (cache vẫn khớp, không gọi lại API) và không chỉnh gì dựa trên 100 nhãn tay.

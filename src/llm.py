@@ -1,5 +1,6 @@
 """Gán nhãn các review «Mẫu LLM» bằng Gemini: gọi theo lô, có cache, chạy dở chạy tiếp được.
-Chạy: python src/llm.py configs/cape_town.yaml
+Chạy: python src/llm.py configs/cape_town.yaml [--skip-llm]
+      --skip-llm: không gọi API (không cần khoá), chỉ dựng lại kết quả từ cache; review chưa có trong cache bị bỏ qua.
 Ra:   data/processed/llm_cache.jsonl, llm_results.csv (bảng phẳng cho KPI/viz), llm_usage.json (token, tỉ lệ lỗi, chi phí)
 Khoá API: biến môi trường llm.api_key_env (mặc định GEMINI_API_KEY)."""
 import hashlib, html, json, os, re, sys, time
@@ -94,7 +95,16 @@ def label(client, llm, config, Item, texts):
     return got, (None if len(got) == len(texts) else err or "content"), tok
 
 
-def main(config_path):
+def city_reviews(root, cfg, proc):
+    """Số review cả thành phố ở mốc mới nhất (cho ước tính chi phí): đếm từ tệp thô, không có thì lấy số đã lưu."""
+    raw = build_path(root, str(cfg["snapshots"][-1]), "reviews.csv.gz")
+    if raw.exists():
+        return sum(len(c) for c in pd.read_csv(raw, dtype=str, usecols=["id"], chunksize=500_000))
+    old = proc / "llm_usage.json"
+    return json.loads(old.read_text(encoding="utf-8")).get("city_reviews") if old.exists() else None
+
+
+def main(config_path, skip_llm=False):
     with open(config_path, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     llm, root, proc = cfg["llm"], cfg["data_root"].strip("/ "), ROOT / "data" / "processed"
@@ -114,6 +124,9 @@ def main(config_path):
         if all(r.get(k) == v for k, v in key.items()):
             rec[r["review_id"]] = r
     todo = [i for i, t in text.items() if t and rec.get(i, {}).get("status") != "ok"]  # chưa làm hoặc lỗi lần trước
+    if todo and skip_llm:
+        print(f"--skip-llm: {len(todo)} review chưa có kết quả trong cache, không gọi API.")
+        todo = []
     if todo:
         if not os.environ.get(llm["api_key_env"]):
             sys.exit(f"Thiếu khoá API: đặt biến môi trường {llm['api_key_env']}.")
@@ -145,8 +158,7 @@ def main(config_path):
     sent = [r for i, r in rec.items() if i in text]  # chi phí cả thành phố = token trung bình mỗi review x số review
     n_err, n = sum(r["status"] == "error" for r in sent), max(len(sent), 1)
     ai, ao = sum(r["tin"] for r in sent) / n, sum(r["tout"] for r in sent) / n
-    city = sum(len(c) for c in pd.read_csv(build_path(root, str(cfg["snapshots"][-1]), "reviews.csv.gz"),
-                                           dtype=str, usecols=["id"], chunksize=500_000))
+    city = city_reviews(root, cfg, proc) or 0
     cin, cout = city * ai * llm["price_in"] / 1e6, city * ao * llm["price_out"] / 1e6
     usage = {**key, "reviews_ok": len(sent) - n_err, "reviews_error": n_err, "error_rate": round(n_err / n, 4),
              "avg_tokens_in": round(ai), "avg_tokens_out": round(ao), "city_reviews": city, "est_cost_usd_input": round(cin, 2),
@@ -158,4 +170,5 @@ def main(config_path):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else "configs/cape_town.yaml"))
+    args = [a for a in sys.argv[1:] if a != "--skip-llm"]
+    sys.exit(main(args[0] if args else "configs/cape_town.yaml", "--skip-llm" in sys.argv))

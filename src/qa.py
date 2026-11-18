@@ -1,5 +1,6 @@
-"""QA và làm sạch listings + reviews: python src/qa.py configs/cape_town.yaml
+"""QA và làm sạch listings + reviews, khảo sát cấu trúc cả 3 tệp (gồm calendar): python src/qa.py configs/cape_town.yaml
 Ra: data/processed/{listings,reviews}_clean.csv, rejected_*.csv, reports/qa_report.csv.
+Calendar chỉ được khảo sát (số dòng, số cột, đủ 365 ngày/listing), không dùng cho KPI: KPI dùng estimated_occupancy_l365d.
 Excel chỉ đọc lần đầu; ID và vùng của nhóm được cache ở data/processed/refs/ (không cần commit Excel)."""
 import sys
 
@@ -30,7 +31,7 @@ RULES = {
     "price_parse": ("price không ép được sang số", "định dạng lạ", "NA"),
     "price_zero": ("price == 0 (đếm trước khi xoá)", "giá 0 không phải giá thật", "chỉ đếm; price_min sẽ xoá"),
     "price_min": ("price < 0.01", "giá không hợp lệ", "đổi thành NA"),
-    "outlier": ("log1p ngoài [Q1-k*IQR, Q3+k*IQR] theo room_type, chỉ tính giá trị khác 0 (bỏ qua khi IQR = 0)", "giá trị cực đoan có thể là lỗi nhập", "gắn cờ, giữ giá trị"),
+    "outlier": ("log1p ngoài [Q1-k*IQR, Q3+k*IQR] theo mốc x room_type, chỉ tính giá trị khác 0 (bỏ qua khi IQR = 0)", "giá trị cực đoan có thể là lỗi nhập", "gắn cờ, giữ giá trị"),
     "occ_range": ("ngoài [0, 365]", "số đêm trong 365 ngày", "đổi thành NA, giữ số 0"),
     "rev_negative": ("< 0", "doanh thu không âm", "đổi thành NA, giữ số 0"),
     "zero_kept": ("giá trị đúng bằng 0", "0 có thể là giá trị thật", "giữ nguyên, chỉ đếm"),
@@ -40,6 +41,8 @@ RULES = {
     "orphan": ("listing_id không thuộc danh sách listing của nhóm", "đánh giá mồ côi", "gắn cờ"),
     "id_mismatch": ("listing_id khác sheet Review", "dữ liệu thô lệch bảng được giao", "gắn cờ"),
     "comment_empty": ("comments rỗng sau khi cắt khoảng trắng", "không có nội dung để phân tích", "đổi thành NA"),
+    "structure": ("số dòng / số cột của tệp thô (cả thành phố)", "khảo sát cấu trúc từng tệp theo đề", "ghi nhận"),
+    "cal_days": ("listing không có đủ 365 ngày khác nhau trong calendar", "lịch thiếu hoặc lặp ngày", "gắn cờ"),
     "expected": ("số liệu khác kỳ vọng trong qa.expected", "lọc sai ID hoặc dữ liệu đổi", "ghi ok/error, không dừng"),
 }
 
@@ -123,11 +126,14 @@ def load_refs(cfg):
 def read(path, ids, table, rep, **kw):
     """Đọc theo khối, chỉ giữ dòng thuộc ID của nhóm (so chuỗi thô); đếm khoá rỗng và dòng ngoài nhóm."""
     kept, total, nulls = [], 0, 0
+    ncols = len(pd.read_csv(path, nrows=0).columns)  # đếm trên header đầy đủ (kể cả khi usecols chỉ lấy vài cột)
     for c in pd.read_csv(path, dtype=str, na_filter=False, encoding_errors="replace", chunksize=500_000, **kw):
         k = c["id"].str.strip().str.replace(r"\.0+$", "", regex=True)
         total, nulls = total + len(c), nulls + (~k.str.fullmatch(r"\d+")).sum()
         kept.append(c[k.isin(ids)])
     df = pd.concat(kept, ignore_index=True)
+    rep.log("structure", table, "(rows)", total, "rows")
+    rep.log("structure", table, "(columns)", ncols, "columns")
     rep.log("key_null", table, "id", nulls)
     rep.log("key_scope", table, "id", total - len(df) - nulls)
     return df
@@ -206,6 +212,22 @@ def clean_reviews(df, ids, lids, sheet_lid, rep):
     return df
 
 
+def survey_calendar(path, lids, rep):
+    """Khảo sát calendar: số dòng/cột cả thành phố, số dòng của nhóm, listing thiếu và listing không đủ 365 ngày."""
+    t, ids, total, kept = "calendar", set(map(str, lids)), 0, []
+    ncols = len(pd.read_csv(path, nrows=0).columns)
+    for c in pd.read_csv(path, dtype=str, na_filter=False, usecols=["listing_id", "date"], chunksize=1_000_000):
+        total += len(c)
+        kept.append(c[c["listing_id"].str.strip().isin(ids)])
+    df = pd.concat(kept, ignore_index=True)
+    rep.log("structure", t, "(rows)", total, "rows")
+    rep.log("structure", t, "(columns)", ncols, "columns")
+    days = df.groupby("listing_id")["date"].nunique()
+    rep.log("ids_missing", t, "listing_id", len(ids - set(days.index)))
+    rep.log("cal_days", t, "date", (days != 365).sum())
+    rep.expect(t, "row_count", len(df), "calendar")
+
+
 def main(config_path):
     with open(config_path, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
@@ -222,10 +244,12 @@ def main(config_path):
         raw = read(build_path(root, snap, "reviews.csv.gz"), set(rid.astype(str)), "reviews", rep,
                    usecols=["listing_id", "id", "date", "comments"])
         rev.append(clean_reviews(raw, rids, lids, dict(zip(rid, r_lid)), rep))
+        survey_calendar(build_path(root, snap, "calendar.csv.gz"), lids, rep)
     rep.snap = "all"  # bước cần nhìn mọi mốc cùng lúc
-    listings, reviews = pd.concat(lis, ignore_index=True), pd.concat(rev, ignore_index=True).sort_values("snapshot")
+    listings, reviews = pd.concat(lis, ignore_index=True), pd.concat(rev, ignore_index=True).sort_values(["snapshot", "id"], kind="stable")
+    by = [listings["snapshot"], listings["room_type"]]  # tứ phân vị theo từng mốc: một listing không bị đếm 4 lần
     for col, name in (("price", "flag_price_outlier"), ("estimated_revenue_l365d", "flag_revenue_outlier")):
-        rep.flag(listings, name, iqr_flag(listings[col].where(listings[col] != 0), listings["room_type"], qa["iqr_k"]), "outlier", "listings", col, x=listings[col])
+        rep.flag(listings, name, iqr_flag(listings[col].where(listings[col] != 0), by, qa["iqr_k"]), "outlier", "listings", col, x=listings[col])
     n, reviews = len(reviews), reviews.drop_duplicates("id", keep="last")
     rep.log("dup_snapshot", "reviews", "id", n - len(reviews))
     out = ROOT / "data" / "processed"

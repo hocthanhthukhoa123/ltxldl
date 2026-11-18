@@ -1,6 +1,8 @@
 """Chấm LLM, baseline và mức sàn (luôn đoán lớp phổ biến nhất) trên nhãn tay: python src/evaluate.py configs/cape_town.yaml
 Chưa có tệp nhãn tay thì tạo bảng mẫu (cột label trống) rồi dừng. Quy ước: review mà phương pháp không trả nhãn hợp lệ (lỗi/rỗng) tính là SAI.
-Ra: data/processed/eval_metrics.csv (method, group, metric, value, n), eval_confusion.csv, eval_errors.csv."""
+Ra: data/processed/eval_metrics.csv (method, group, metric, value, n), eval_confusion.csv, eval_errors.csv.
+Người gán thứ hai (tuỳ chọn): python src/evaluate.py configs/cape_town.yaml --make-second-sheet tạo eval.labels_2 (cùng review,
+cột label trống). Người thứ hai tự điền, KHÔNG xem nhãn của người thứ nhất; khi đủ nhãn, evaluate tính Cohen's kappa giữa hai người."""
 import random
 import sys
 
@@ -22,9 +24,9 @@ def f1(y, p, c):
     return 2 * np.sum((y == c) & (p == c)) / d if d else 0.0
 
 
-def macro_f1(y, p):
-    """Trung bình F1 trên các lớp thực sự có trong nhãn tay."""
-    return float(np.mean([f1(y, p, c) for c in np.unique(y)]))
+def macro_f1(y, p, classes=None):
+    """Trung bình F1 trên các lớp có trong nhãn tay (classes: cố định danh sách lớp, dùng khi bootstrap)."""
+    return float(np.mean([f1(y, p, c) for c in (np.unique(y) if classes is None else classes)]))
 
 
 def metrics(y, p, full=False):
@@ -44,8 +46,8 @@ def kappa(a, b):
 
 def boot(y, preds, B, seed):
     """Bootstrap B lần (mọi phương pháp dùng chung phép mẫu lại): CI 95% của accuracy, macro-F1 và chênh lệch llm - baseline."""
-    idx = np.random.default_rng(seed).integers(0, len(y), (B, len(y)))
-    st = {m: np.array([[np.mean(y[i] == p[i]), macro_f1(y[i], p[i])] for i in idx]) for m, p in preds.items()}
+    idx, cls = np.random.default_rng(seed).integers(0, len(y), (B, len(y))), np.unique(y)  # lớp lấy từ cả mẫu, không đổi theo lần lấy lại
+    st = {m: np.array([[np.mean(y[i] == p[i]), macro_f1(y[i], p[i], cls)] for i in idx]) for m, p in preds.items()}
     st["diff"] = st["llm"] - st["baseline"]
     return {m: np.percentile(v, [2.5, 97.5], axis=0).T.ravel() for m, v in st.items()}  # theo thứ tự CI_NAMES
 
@@ -64,7 +66,35 @@ def make_sheet(cfg, path):
     ok = [i for i, t in text.items() if t]
     ids = random.Random(cfg["seed"]).sample(ok, min(cfg["eval"]["n_labels"], len(ok)))
     path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame({"review_id": ids, "label": "", "text": [text[i] for i in ids]}).to_csv(path, index=False, encoding="utf-8-sig")
+    pd.DataFrame({"review_id": ids, "comments": [text[i] for i in ids], "label": ""}).to_csv(path, index=False, encoding="utf-8-sig")
+
+
+def second_annotator(E):
+    """Cohen's kappa giữa hai người gán nhãn nếu tệp eval.labels_2 có đủ nhãn hợp lệ; không thì trả về []."""
+    p2 = ROOT / E["labels_2"] if E.get("labels_2") else None
+    if not p2 or not p2.exists():
+        return []
+    a = pd.read_csv(ROOT / E["labels"], dtype=str, usecols=["review_id", "label"], encoding="utf-8-sig")
+    b = pd.read_csv(p2, dtype=str, usecols=["review_id", "label"], encoding="utf-8-sig")
+    d = a.merge(b, on="review_id", suffixes=("_1", "_2"))
+    for c in ("label_1", "label_2"):
+        d[c] = d[c].fillna("").str.strip().str.lower()
+    d = d[d["label_1"].isin(CLASSES) & d["label_2"].isin(CLASSES)]
+    if len(d) < len(a):
+        print(f"{p2.name}: mới có {len(d)}/{len(a)} nhãn hợp lệ, chưa tính kappa giữa hai người gán.")
+        return []
+    y1, y2 = d["label_1"].to_numpy(), d["label_2"].to_numpy()
+    return [("hand_vs_hand2", "all", "agreement", np.mean(y1 == y2), len(d)),
+            ("hand_vs_hand2", "all", "cohen_kappa", kappa(y1, y2), len(d))]
+
+
+def make_second_sheet(E):
+    """Tạo tệp cho người gán thứ hai: cùng review_id và văn bản, cột label để trống."""
+    p2 = ROOT / E["labels_2"]
+    if p2.exists():
+        sys.exit(f"{p2} đã có, không ghi đè.")
+    pd.read_csv(ROOT / E["labels"], dtype=str, encoding="utf-8-sig").assign(label="").to_csv(p2, index=False, encoding="utf-8-sig")
+    print(f"Đã tạo {p2}: người thứ hai điền cột label, không xem {E['labels']}.")
 
 
 def main(config_path):
@@ -115,6 +145,7 @@ def main(config_path):
     rows += [("llm_vs_baseline", "full_sample", "agreement", np.mean(a == b), len(a)),
              ("llm_vs_baseline", "full_sample", "cohen_kappa", kappa(a, b), len(a))]
     rows += [(f"{m}_vs_hand", "all", "cohen_kappa", kappa(y, preds[m]), n) for m in ("llm", "baseline")]
+    rows += second_annotator(E)
     pd.DataFrame(rows, columns=["method", "group", "metric", "value", "n"]).round(4).to_csv(proc / "eval_metrics.csv", index=False)
     conf = [pd.DataFrame({"method": m, "label": y, "pred": p}).value_counts().reset_index(name="count") for m, p in preds.items()]
     pd.concat(conf).to_csv(proc / "eval_confusion.csv", index=False)
@@ -126,4 +157,10 @@ def main(config_path):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "configs/cape_town.yaml")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    cfg_path = args[0] if args else "configs/cape_town.yaml"
+    if "--make-second-sheet" in sys.argv:
+        with open(cfg_path, encoding="utf-8") as f:
+            make_second_sheet(yaml.safe_load(f)["eval"])
+    else:
+        main(cfg_path)

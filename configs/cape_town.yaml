@@ -33,6 +33,7 @@ baseline:
   mixed_min: 0.4     # mệnh đề có |điểm| >= giá trị này mới tính là khen/chê rõ
   default: positive  # nhãn phổ biến nhất khi không có tín hiệu
 eval:
-  labels: data/samples/hand_labels.csv   # cột: review_id, label
+  labels: data/samples/hand_labels.csv     # cột: review_id, comments, label
+  labels_2: data/samples/hand_labels_2.csv # tuỳ chọn: người gán thứ hai (tạo bằng --make-second-sheet)
   n_labels: 100
   bootstrap: 2000
