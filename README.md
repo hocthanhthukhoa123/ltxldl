@@ -96,7 +96,7 @@ Mọi tham số nằm trong `configs/cape_town.yaml`:
 | Đối chứng | `data/processed/baseline_results.csv` |
 | KPI | `data/processed/kpi_hibernation_rate.csv`, `kpi_median_price.csv`, `kpi_median_revenue.csv`, `kpi_median_occupied_nights.csv`, `kpi_net_sentiment.csv` |
 | Đánh giá | `data/processed/eval_metrics.csv`, `eval_confusion.csv`, `eval_errors.csv` |
-| Hình | `figures/fig1_hibernation_heatmap.png` (KPI 1), `fig2_median_price.png` (KPI 2), `fig3_median_revenue.png` (KPI 3), `fig4_net_sentiment.png` (KPI 4), `fig5_occupied_nights_bubble.png` (KPI 5), `fig6_llm_vs_baseline.png` (đánh giá LLM) |
+| Hình | `figures/fig1_hibernation_heatmap.png` (KPI 1), `fig2_median_price.png` (KPI 2), `fig3_median_revenue.png` (KPI 3), `fig4_net_sentiment.png` (KPI 4), `fig5_revenue_drivers.png` (KPI 5), `fig6_llm_vs_baseline.png` (đánh giá LLM) |
 
 Chạy lại pipeline trên bản clone mới cho ra đúng các tệp này (thứ tự dòng cố định). `git status` sau khi chạy chỉ được thấy `data/raw/` bị bỏ qua.
 
@@ -110,15 +110,11 @@ Mọi KPI được tính theo `analysis_area` (A01–A08) và `neighbourhood_cle
 | 2. Giá trung vị theo khu vực | 09/2025, 03/2026, 06/2026 | trung vị `price` khác rỗng. `kpi_median_price.csv` có cả hai mức: mọi loại phòng (`room_type = all`, dùng cho hình) và từng loại phòng | chấm nối theo mốc, mỗi vùng một đường |
 | 3. Doanh thu ước tính mỗi listing mỗi năm | 09/2025, 03/2026, 06/2026 | trung vị `estimated_revenue_l365d`, tính cả listing có doanh thu 0 | chấm nối theo mốc, mỗi vùng một đường |
 | 4. Cảm xúc ròng theo khu vực (LLM) | mẫu LLM | trung bình +1 (positive) / 0 (mixed) / −1 (negative) trên review có `status = ok`; kèm CI 95% bootstrap theo cụm listing và một dòng toàn mẫu (`level = all`) | chấm + khoảng tin cậy, kèm thanh thành phần nhãn |
-| 5. Số đêm có khách trung vị (listing đang hoạt động) | cả 4 (hình dùng mốc mới nhất) | trung vị `estimated_occupancy_l365d` trên các listing có occupancy > 0 | bubble: x = số đêm, y = giá trung vị (mọi loại phòng), kích thước = doanh thu trung vị |
+| 5. Số đêm có khách trung vị (listing đang hoạt động) | cả 4 (hình dùng 3 mốc có giá) | trung vị `estimated_occupancy_l365d` trên các listing có occupancy > 0 | thanh lệch %: giá và số đêm trung vị của mỗi vùng lệch bao nhiêu % so với mức chung cùng mốc, 3 mốc cạnh nhau |
 
-**Nhóm màu doanh thu trong hình KPI 5.** Với T là doanh thu trung vị của vùng ở mốc mới nhất, D = (Tmax − Tmin) / 3:
+**Hình KPI 5 (nguồn doanh thu).** Doanh thu ≈ giá × số đêm, nên hình tách doanh thu của mỗi vùng thành hai phần: giá trung vị và số đêm có khách trung vị, mỗi phần tính bằng % lệch so với trung vị toàn mẫu cùng mốc. Chỉ tính listing có occupancy > 0, nên mức chung mốc 2026-06-29 là 1,655 ZAR/đêm (khác 1,683.5 của KPI 2, vốn tính mọi listing có giá) và 54 đêm/năm. Vùng xếp theo doanh thu trung vị (KPI 3) ở mốc cuối.
 
-- nhóm 1: T < Tmin + D
-- nhóm 2: Tmin + D ≤ T ≤ Tmax − D
-- nhóm 3: T > Tmax − D
-
-Với số liệu mốc 2026-06-29, hai ngưỡng là khoảng 62,950 và 101,229 ZAR. Kết quả: A08, A04, A03 thuộc nhóm 1; A07, A01, A05 thuộc nhóm 2; A06, A02 thuộc nhóm 3. Hai đường nét đứt là trung vị toàn mẫu của số đêm có khách và của giá.
+Nhãn bên phải (mốc cuối) dựa trên dải ±10%: lệch quá +10% là cao, dưới −10% là thấp, còn lại là ngang mức chung. Ví dụ: "giá + khách" (cả hai cao), "đông khách" (số đêm cao), "giá cao, ít khách", "ít khách", "yếu cả hai". Ở mốc 2026-06-29: A02 giá + khách; A06, A05 đông khách; A01, A03 giá cao, ít khách; A07 ít khách; A04, A08 yếu cả hai.
 
 ## Hạn chế đã biết (cần nêu trong báo cáo)
 
