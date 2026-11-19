@@ -97,19 +97,24 @@ def fig5_revenue_drivers(cfg):
     rev = kpi("median_revenue")
     order = rev[rev["snapshot"] == snaps[-1]].sort_values("value", ascending=False)["group"].tolist()  # doanh thu cao ở trên
     f, axs = plt.subplots(1, len(snaps), figsize=(12, 5.4), sharey=True)
+    tags = []  # nhãn của từng vùng ở từng mốc, để lấy nhãn chung theo đa số
     for ax, snap in zip(axs, snaps):
         d = L[L["snapshot"] == snap]
         g = d.groupby("analysis_area").agg(p=("price", "median"), o=("estimated_occupancy_l365d", "median")).reindex(order)
         g = pd.DataFrame({"p": g["p"] / d["price"].median() - 1, "o": g["o"] / d["estimated_occupancy_l365d"].median() - 1}) * 100
         y = np.arange(len(order))
+        tags.append([tag(p, o) for p, o in zip(g["p"], g["o"])])
         ax.axvspan(-10, 10, color=GRID, alpha=0.6, lw=0, zorder=0), ax.axvline(0, color=INK, lw=1, zorder=1)
         ax.barh(y - 0.19, g["p"], height=0.36, color=SERIES[1], label="Giá", zorder=2)
         ax.barh(y + 0.19, g["o"], height=0.36, color=SERIES[0], label="Số đêm có khách", zorder=2)
         ax.set(yticks=y, yticklabels=order, xlim=(-55, 90), xticks=[-50, 0, 50], title=f"{snap[5:7]}/{snap[:4]}")
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:+.0f}%" if v else "0")), ax.grid(axis="y", visible=False)
     axs[0].invert_yaxis()
-    [note(axs[-1], tag(p, o), (90, i), 8, va="center", fontsize=8.5, color=INK) for i, (p, o) in enumerate(zip(g["p"], g["o"]))]
-    note(axs[-1], f"Nguồn doanh thu {snaps[-1][5:7]}/{snaps[-1][:4]}", (90, -0.75), 8, va="center", color=MUTED)
+    for i, ts in enumerate(zip(*tags)):  # nhãn chung: nhãn xuất hiện ở ít nhất 2/3 mốc, ghi kèm số mốc; không có thì "không ổn định"
+        top = max(set(ts), key=ts.count)
+        note(axs[-1], f"{top} ({ts.count(top)}/{len(ts)})" if ts.count(top) * 2 > len(ts) else "không ổn định", (90, i), 8,
+             va="center", fontsize=8.5, color=INK)
+    note(axs[-1], f"Nguồn doanh thu ({len(snaps)} mốc)", (90, -0.75), 8, va="center", color=MUTED)
     h, lab = axs[0].get_legend_handles_labels()  # dòng trống trong tiêu đề chừa chỗ cho chú giải, không đè tiêu đề mốc
     f.suptitle("KPI 5. Giá và số đêm có khách trung vị của từng vùng, lệch bao nhiêu % so với mức chung cùng mốc\n ",
                x=0.01, ha="left", va="top", fontsize=10, fontweight="bold", color=INK, linespacing=2.2)
@@ -119,7 +124,8 @@ def fig5_revenue_drivers(cfg):
     return f, ("Chỉ tính listing có estimated_occupancy_l365d > 0; mức chung mốc "
                f"{snaps[-1]}: {mid['price'].median():,.0f} {cfg['currency']}/đêm và {mid['estimated_occupancy_l365d'].median():.0f} đêm/năm. "
                "Vùng xếp theo doanh thu trung vị (KPI 3) mốc cuối, cao nhất ở trên. Mốc 12/2025 không có giá nên không so được. "
-               "Nhãn bên phải: cột lệch quá ±10% mới tính là cao hoặc thấp.")
+               "Nhãn bên phải: ở mỗi mốc, cột lệch quá ±10% mới tính là cao hoặc thấp; nhãn chung là nhãn "
+               f"xuất hiện ở đa số mốc, kèm số mốc (vd 2/{len(snaps)}); không có đa số thì ghi \"không ổn định\".")
 
 
 def fig6_llm_vs_baseline(cfg):

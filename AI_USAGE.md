@@ -88,6 +88,7 @@ keep the code as short as under 50 lines
 - "run_pipeline.py: it doesn't exist yet, and it's required. README: it must match the new commands. and fix all detected problems" (dẫn tới các thay đổi dưới đây).
 - Gửi ảnh mẫu 5 biểu đồ KPI của nhóm và công thức nhóm màu doanh thu cho KPI 5.
 - "thay hình đó cho hình cũ ở kpi5": thay bubble bằng biểu đồ thanh lệch % giá và số đêm theo 3 mốc (theo ảnh mẫu của nhóm).
+- Hỏi nhãn cột cuối nên là kết luận chung cho cả 3 mốc không, cách nào hợp lý nhất; nhóm chốt cách đa số 2/3 mốc, ghi kèm số mốc, không có đa số thì ghi "không ổn định".
 
 **Thay đổi theo từng tệp:**
 - `run_pipeline.py` (mới): một lệnh chạy 7 bước, nạp `.env`, có `--skip-llm`, `--from`, `--only`, dừng khi một bước lỗi.

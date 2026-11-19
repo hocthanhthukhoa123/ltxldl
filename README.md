@@ -114,7 +114,7 @@ Mọi KPI được tính theo `analysis_area` (A01–A08) và `neighbourhood_cle
 
 **Hình KPI 5 (nguồn doanh thu).** Doanh thu ≈ giá × số đêm, nên hình tách doanh thu của mỗi vùng thành hai phần: giá trung vị và số đêm có khách trung vị, mỗi phần tính bằng % lệch so với trung vị toàn mẫu cùng mốc. Chỉ tính listing có occupancy > 0, nên mức chung mốc 2026-06-29 là 1,655 ZAR/đêm (khác 1,683.5 của KPI 2, vốn tính mọi listing có giá) và 54 đêm/năm. Vùng xếp theo doanh thu trung vị (KPI 3) ở mốc cuối.
 
-Nhãn bên phải (mốc cuối) dựa trên dải ±10%: lệch quá +10% là cao, dưới −10% là thấp, còn lại là ngang mức chung. Ví dụ: "giá + khách" (cả hai cao), "đông khách" (số đêm cao), "giá cao, ít khách", "ít khách", "yếu cả hai". Ở mốc 2026-06-29: A02 giá + khách; A06, A05 đông khách; A01, A03 giá cao, ít khách; A07 ít khách; A04, A08 yếu cả hai.
+Nhãn bên phải là kết luận chung cho cả 3 mốc. Ở mỗi mốc, mỗi cột lệch quá +10% là cao, dưới −10% là thấp, còn lại là ngang mức chung; từ đó gán một nhãn: "giá + khách" (cả hai cao), "đông khách" (số đêm cao), "nhờ giá" (giá cao), "giá cao, ít khách", "ít khách", "giá thấp", "yếu cả hai" hoặc "ngang mức chung". Nhãn chung là nhãn xuất hiện ở đa số mốc (ít nhất 2/3), ghi kèm số mốc; nếu cả 3 mốc khác nhau thì ghi "không ổn định". Kết quả: A02 giá + khách (3/3); A06 giá + khách (2/3); A05 đông khách (2/3); A01 giá cao, ít khách (2/3); A07 ít khách (2/3); A03 ít khách (2/3); A04 và A08 yếu cả hai (3/3). Nhãn 2/3 của A06 và A07 nằm sát ngưỡng 10% nên kém chắc hơn. Số đêm là số 365 ngày trước mỗi mốc nên khung thời gian các mốc chồng nhau; "3/3" không phải 3 lần đo độc lập.
 
 ## Hạn chế đã biết (cần nêu trong báo cáo)
 
