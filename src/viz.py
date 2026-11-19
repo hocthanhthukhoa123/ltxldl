@@ -84,34 +84,43 @@ def fig4_net_sentiment(cfg):
                f"khoảng tin cậy 95% (bootstrap {cfg['eval']['bootstrap']} lần, lấy mẫu lại theo listing).\n"
                "Các khoảng chồng nhau nhiều: mẫu chưa đủ để xếp hạng chắc chắn mọi vùng.")
 
-def fig5_occupied_nights_bubble(cfg):
-    last, pr, cur = str(cfg["snapshots"][-1]), kpi("median_price"), cfg["currency"]
-    m = pd.DataFrame({c: d[d["snapshot"] == last].set_index("group")["value"] for c, d in (("nights", kpi(
-        "median_occupied_nights")), ("price", pr[pr["room_type"] == "all"]), ("rev", kpi("median_revenue")))}).dropna()
-    c1, c2 = (mn := m.min())["rev"] + (D := ((mx := m.max())["rev"] - mn["rev"]) / 3), mx["rev"] - D  # nhóm màu: xem chú thích
-    L = pd.read_csv(P / "listings_clean.csv", dtype={"snapshot": str}).query("snapshot == @last")
-    (f, ax), size = plt.subplots(figsize=(8.6, 5.6)), 2600 * m["rev"] / m["rev"].max()  # diện tích bóng tỉ lệ với doanh thu
-    ref_x, ref_y = L.loc[L["estimated_occupancy_l365d"] > 0, "estimated_occupancy_l365d"].median(), L["price"].median()
-    ax.scatter(m["nights"], m["price"], s=size, c=[TIERS[int(t >= c1) + int(t > c2)] for t in m["rev"]], alpha=0.85,
-               edgecolor=BG, linewidth=2, zorder=3)
-    for (g, r), s in zip(m.iterrows(), size):  # nhãn sát mép bóng (bán kính tính bằng điểm ảnh)
-        note(ax, g, (r["nights"], r["price"]), np.sqrt(s / np.pi) + 3, 4, fontsize=9, fontweight="bold", color=INK, va="bottom")
-        note(ax, f"{k(r['rev'])}/năm", (r["nights"], r["price"]), np.sqrt(s / np.pi) + 3, -2, va="top")
-    ax.axvline(ref_x, color=INK2, lw=1, ls=DASH, zorder=1), ax.axhline(ref_y, color=INK2, lw=1, ls=DASH, zorder=1)
-    ax.set(xlim=(20, max(105, mx["nights"] + 15)), ylim=(min(900, mn["price"] - 250), max(3200, mx["price"] + 300)),
-           xlabel="Số đêm có khách trung vị (đêm/năm, listing đang hoạt động)", ylabel=f"Giá trung vị ({cur}/đêm)",
-           title=f"KPI 5. Số đêm có khách, giá và doanh thu theo vùng, mốc {last}")
-    (x0, x1), (y0, y1) = ax.get_xlim(), ax.get_ylim()
-    for (x, ha, sx), (y, va, sy, t) in [(a, b) for b in ((y1, "top", -6, "Giá cao"), (y0, "bottom", 6, "Giá thấp"))
-                                        for a in ((x0, "left", 6), (x1, "right", -6))]:
-        note(ax, f"{t}, {'ít' if ha == 'left' else 'nhiều'} đêm", (x, y), sx, sy, ha=ha, va=va, color=MUTED)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(k))
-    ax.legend(handles=[plt.Line2D([], [], ls="", marker="o", markersize=9, color=c, label=f"Doanh thu {n}/năm") for c, n in zip(
-        TIERS, (f"< {k(c1)}", f"{k(c1)} – {k(c2)}", f"> {k(c2)}"))], loc="upper center", bbox_to_anchor=(0.5, -0.12), ncols=3,
-        fontsize=8, handletextpad=0.3)
-    return f, (f"Kích thước bóng tỉ lệ với doanh thu trung vị. Nhóm màu: D = (Tmax − Tmin)/3, T = doanh thu trung vị của vùng; "
-               f"nhóm 1: T < Tmin + D ({k(c1)}); nhóm 2: Tmin + D ≤ T ≤ Tmax − D ({k(c2)}); nhóm 3: T > Tmax − D.\n"
-               f"Đường nét đứt: trung vị toàn mẫu ({ref_x:.0f} đêm; {ref_y:,.0f} {cur}/đêm, mọi loại phòng).")
+def tag(p, o):  # nhãn nguồn doanh thu theo độ lệch % của giá (p) và số đêm (o); |lệch| <= 10% là ngang mức chung
+    hi_p, lo_p, hi_o, lo_o = p > 10, p < -10, o > 10, o < -10
+    return ("giá + khách" if hi_p and hi_o else "giá cao, ít khách" if hi_p and lo_o else "nhờ giá" if hi_p else
+            "đông khách" if hi_o else "yếu cả hai" if lo_p and lo_o else "ít khách" if lo_o else "giá thấp" if lo_p else
+            "ngang mức chung")
+
+
+def fig5_revenue_drivers(cfg):
+    L = pd.read_csv(P / "listings_clean.csv", dtype={"snapshot": str}).query("estimated_occupancy_l365d > 0")
+    snaps = [str(s) for s in cfg["snapshots"] if L.loc[L["snapshot"] == str(s), "price"].notna().any()]  # bỏ mốc không có giá
+    rev = kpi("median_revenue")
+    order = rev[rev["snapshot"] == snaps[-1]].sort_values("value", ascending=False)["group"].tolist()  # doanh thu cao ở trên
+    f, axs = plt.subplots(1, len(snaps), figsize=(12, 5.4), sharey=True)
+    for ax, snap in zip(axs, snaps):
+        d = L[L["snapshot"] == snap]
+        g = d.groupby("analysis_area").agg(p=("price", "median"), o=("estimated_occupancy_l365d", "median")).reindex(order)
+        g = pd.DataFrame({"p": g["p"] / d["price"].median() - 1, "o": g["o"] / d["estimated_occupancy_l365d"].median() - 1}) * 100
+        y = np.arange(len(order))
+        ax.axvspan(-10, 10, color=GRID, alpha=0.6, lw=0, zorder=0), ax.axvline(0, color=INK, lw=1, zorder=1)
+        ax.barh(y - 0.19, g["p"], height=0.36, color=SERIES[1], label="Giá", zorder=2)
+        ax.barh(y + 0.19, g["o"], height=0.36, color=SERIES[0], label="Số đêm có khách", zorder=2)
+        ax.set(yticks=y, yticklabels=order, xlim=(-55, 90), xticks=[-50, 0, 50], title=f"{snap[5:7]}/{snap[:4]}")
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:+.0f}%" if v else "0")), ax.grid(axis="y", visible=False)
+    axs[0].invert_yaxis()
+    [note(axs[-1], tag(p, o), (90, i), 8, va="center", fontsize=8.5, color=INK) for i, (p, o) in enumerate(zip(g["p"], g["o"]))]
+    note(axs[-1], f"Nguồn doanh thu {snaps[-1][5:7]}/{snaps[-1][:4]}", (90, -0.75), 8, va="center", color=MUTED)
+    h, lab = axs[0].get_legend_handles_labels()  # dòng trống trong tiêu đề chừa chỗ cho chú giải, không đè tiêu đề mốc
+    f.suptitle("KPI 5. Giá và số đêm có khách trung vị của từng vùng, lệch bao nhiêu % so với mức chung cùng mốc\n ",
+               x=0.01, ha="left", va="top", fontsize=10, fontweight="bold", color=INK, linespacing=2.2)
+    f.legend(h + [plt.Rectangle((0, 0), 1, 1, color=GRID, alpha=0.6)], lab + ["Vùng ±10%: ngang mức chung"], ncols=3,
+             loc="upper left", bbox_to_anchor=(0.005, 0.935), fontsize=8.5).set_in_layout(False)
+    mid = L[L["snapshot"] == snaps[-1]]
+    return f, ("Chỉ tính listing có estimated_occupancy_l365d > 0; mức chung mốc "
+               f"{snaps[-1]}: {mid['price'].median():,.0f} {cfg['currency']}/đêm và {mid['estimated_occupancy_l365d'].median():.0f} đêm/năm. "
+               "Vùng xếp theo doanh thu trung vị (KPI 3) mốc cuối, cao nhất ở trên. Mốc 12/2025 không có giá nên không so được. "
+               "Nhãn bên phải: cột lệch quá ±10% mới tính là cao hoặc thấp.")
+
 
 def fig6_llm_vs_baseline(cfg):
     raw, (f, ax) = pd.read_csv(P / "eval_metrics.csv").query("group == 'all'"), plt.subplots(figsize=(7.4, 3.8))
@@ -126,7 +135,7 @@ def fig6_llm_vs_baseline(cfg):
     ax.legend(loc="lower right", bbox_to_anchor=(1, 1), ncols=2)
     return f, "Nhãn tay 97% positive nên macro-F1 chỉ dựa vào 3 review không phải positive; khoảng tin cậy rất rộng."
 
-FIGS = {fn.__name__: fn for fn in (fig1_hibernation_heatmap, fig4_net_sentiment, fig5_occupied_nights_bubble,
+FIGS = {fn.__name__: fn for fn in (fig1_hibernation_heatmap, fig4_net_sentiment, fig5_revenue_drivers,
                                    fig6_llm_vs_baseline)} | {"fig2_median_price": lambda cfg: lines(
     cfg, kpi("median_price").query("room_type == 'all'"), "KPI 2. Giá trung vị theo vùng (mọi loại phòng)", f"Giá trung vị "
     f"({cfg['currency']}/đêm)", "Trung vị price khác rỗng. Mốc 03 là cuối mùa hè ở Cape Town nên giá cao hơn; "
