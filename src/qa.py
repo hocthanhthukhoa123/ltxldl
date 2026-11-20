@@ -2,13 +2,11 @@
 Ra: data/processed/{listings,reviews}_clean.csv, rejected_*.csv, reports/qa_report.csv.
 Calendar chỉ được khảo sát (số dòng, số cột, đủ 365 ngày/listing), không dùng cho KPI: KPI dùng estimated_occupancy_l365d.
 Excel chỉ đọc lần đầu; ID và vùng của nhóm được cache ở data/processed/refs/ (không cần commit Excel)."""
-import sys
-
 import numpy as np
 import pandas as pd
-import yaml
 
-from download import ROOT, build_path
+from common import PROC, ROOT, load_refs, run
+from download import build_path
 
 ENC = "[ÃÂ][^A-Za-z\\s]|â€|\ufffd"  # dấu hiệu lỗi mã hoá (mojibake)
 SENTINELS = {"n/a", "na", "nan", "null", "none", "-", "--", "unknown"}  # chuỗi đánh dấu "thiếu"
@@ -108,21 +106,6 @@ class Report:
                      actual, "ok" if ok else "error")
 
 
-def load_refs(cfg):
-    """ID/vùng của nhóm từ Excel, cache CSV nhỏ (có thể commit); có cache thì không cần Excel."""
-    base, g = ROOT / "data" / "processed" / "refs", cfg["group_code"]
-    base.mkdir(parents=True, exist_ok=True)
-    refs = {}
-    for sheet, key in (("Listing", "listing"), ("Review", "review"), ("Vùng", "area")):
-        cache = base / f"{key}_{g}.csv"
-        if not cache.exists():
-            df = pd.read_excel(ROOT / cfg["ids_file"], sheet_name=sheet, dtype=str)
-            mine = df["Thành phố"].str.lower().str.replace(" ", "_") == cfg["city"] if key == "area" else df["Mã dữ liệu"] == g
-            df[mine].to_csv(cache, index=False)
-        refs[key] = pd.read_csv(cache, dtype=str)
-    return refs
-
-
 def read(path, ids, table, rep, **kw):
     """Đọc theo khối, chỉ giữ dòng thuộc ID của nhóm (so chuỗi thô); đếm khoá rỗng và dòng ngoài nhóm."""
     kept, total, nulls = [], 0, 0
@@ -157,7 +140,7 @@ def prep(df, ids, table, rep):
 
 def clean_listings(df, ids, areas, boxes, rep):
     t = "listings"
-    df = prep(df, ids, t, rep)[LIST_COLS].assign(snapshot=rep.snap)
+    df = prep(df, ids, t, rep).reindex(columns=LIST_COLS, fill_value="").assign(snapshot=rep.snap)  # mốc thiếu cột: cột rỗng, bị đếm ở các quy tắc rỗng
     for c in ("neighbourhood_cleansed", "room_type"):  # (2) text, rỗng/sentinel -> NA
         s = df[c].str.strip()
         miss = (s == "") | s.str.lower().isin(SENTINELS)
@@ -228,9 +211,7 @@ def survey_calendar(path, lids, rep):
     rep.expect(t, "row_count", len(df), "calendar")
 
 
-def main(config_path):
-    with open(config_path, encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+def main(cfg):
     root, qa, refs = cfg["data_root"].strip("/ "), cfg["qa"], load_refs(cfg)
     L, R, V = refs["listing"], refs["review"], refs["area"]
     lid, rid, r_lid = to_int(L["listing_id"]), to_int(R["review_id"]), to_int(R["listing_id"])
@@ -252,11 +233,10 @@ def main(config_path):
         rep.flag(listings, name, iqr_flag(listings[col].where(listings[col] != 0), by, qa["iqr_k"]), "outlier", "listings", col, x=listings[col])
     n, reviews = len(reviews), reviews.drop_duplicates("id", keep="last")
     rep.log("dup_snapshot", "reviews", "id", n - len(reviews))
-    out = ROOT / "data" / "processed"
-    listings.to_csv(out / "listings_clean.csv", index=False)
-    reviews.to_csv(out / "reviews_clean.csv", index=False)
+    listings.to_csv(PROC / "listings_clean.csv", index=False)
+    reviews.to_csv(PROC / "reviews_clean.csv", index=False)
     for table, parts in rep.rejected.items():
-        pd.concat(parts).to_csv(out / f"rejected_{table}.csv", index=False)
+        pd.concat(parts).to_csv(PROC / f"rejected_{table}.csv", index=False)
     (ROOT / "reports").mkdir(exist_ok=True)
     report = pd.DataFrame(rep.rows)
     report.to_csv(ROOT / "reports" / "qa_report.csv", index=False, encoding="utf-8-sig")
@@ -264,4 +244,4 @@ def main(config_path):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "configs/cape_town.yaml")
+    run(main)

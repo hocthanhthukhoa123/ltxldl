@@ -1,6 +1,7 @@
 """Chấm LLM, baseline và mức sàn (luôn đoán lớp phổ biến nhất) trên nhãn tay: python src/evaluate.py configs/cape_town.yaml
 Chưa có tệp nhãn tay thì tạo bảng mẫu (cột label trống) rồi dừng. Quy ước: review mà phương pháp không trả nhãn hợp lệ (lỗi/rỗng) tính là SAI.
-Ra: data/processed/eval_metrics.csv (method, group, metric, value, n), eval_confusion.csv, eval_errors.csv.
+Ra: data/processed/eval_metrics.csv (method, group, metric, value, n), eval_confusion.csv, eval_errors.csv,
+figures/fig6_llm_vs_baseline.png (vẽ bằng viz.fig6_llm_vs_baseline sau khi có số đo).
 Người gán thứ hai (tuỳ chọn): python src/evaluate.py configs/cape_town.yaml --make-second-sheet tạo eval.labels_2 (cùng review,
 cột label trống). Người thứ hai tự điền, KHÔNG xem nhãn của người thứ nhất; khi đủ nhãn, evaluate tính Cohen's kappa giữa hai người."""
 import random
@@ -8,11 +9,8 @@ import sys
 
 import numpy as np
 import pandas as pd
-import yaml
 
-from download import ROOT
-from llm import clean
-from qa import load_refs
+from common import PROC, ROOT, load_refs, review_texts, run
 
 CLASSES, METHODS = ["positive", "mixed", "negative"], ["llm", "baseline", "floor"]
 CI_NAMES = ["accuracy_ci_lo", "accuracy_ci_hi", "macro_f1_ci_lo", "macro_f1_ci_hi"]
@@ -54,8 +52,7 @@ def boot(y, preds, B, seed):
 
 def texts(cfg, ids):
     """Văn bản đã clean() của các review (cùng bước làm sạch với llm.py và baseline.py)."""
-    rv = pd.read_csv(ROOT / "data" / "processed" / "reviews_clean.csv", usecols=["id", "comments"]).set_index("id")["comments"]
-    return {i: clean(rv.get(i), cfg["llm"]["max_chars"]) for i in ids}
+    return review_texts(cfg, list(ids))
 
 
 def make_sheet(cfg, path):
@@ -88,7 +85,7 @@ def second_annotator(E):
             ("hand_vs_hand2", "all", "cohen_kappa", kappa(y1, y2), len(d))]
 
 
-def make_second_sheet(E):
+def write_second_sheet(E):
     """Tạo tệp cho người gán thứ hai: cùng review_id và văn bản, cột label để trống."""
     p2 = ROOT / E["labels_2"]
     if p2.exists():
@@ -97,10 +94,10 @@ def make_second_sheet(E):
     print(f"Đã tạo {p2}: người thứ hai điền cột label, không xem {E['labels']}.")
 
 
-def main(config_path):
-    with open(config_path, encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
-    E, proc = cfg["eval"], ROOT / "data" / "processed"
+def main(cfg, make_second_sheet=False):
+    E, proc = cfg["eval"], PROC
+    if make_second_sheet:
+        return write_second_sheet(E)
     path = ROOT / E["labels"]
     if not path.exists():
         make_sheet(cfg, path)
@@ -154,13 +151,9 @@ def main(config_path):
                    wrong_in=wrong.apply(lambda r: "+".join(m for m in wrong if r[m]), axis=1))[wrong.any(axis=1)]
     err[["review_id", "label", "llm", "baseline", "wrong_in", "lang", "length", "auto", "excerpt"]].to_csv(proc / "eval_errors.csv", index=False)
     print(f"{len(rows)} số đo, {len(err)} review sai -> eval_metrics.csv, eval_confusion.csv, eval_errors.csv")
+    import viz  # nạp muộn: chỉ cần matplotlib khi đã có số đo
+    viz.save(cfg, viz.EVAL_FIG, viz.fig6_llm_vs_baseline)
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    cfg_path = args[0] if args else "configs/cape_town.yaml"
-    if "--make-second-sheet" in sys.argv:
-        with open(cfg_path, encoding="utf-8") as f:
-            make_second_sheet(yaml.safe_load(f)["eval"])
-    else:
-        main(cfg_path)
+    run(main)

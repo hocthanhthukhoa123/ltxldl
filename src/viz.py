@@ -1,15 +1,16 @@
-"""Vẽ 5 hình KPI + 1 hình đánh giá LLM vào figures/ (chỉ đọc kết quả có sẵn): python src/viz.py configs/cape_town.yaml"""
-import sys
+"""Vẽ 5 hình KPI vào figures/ (chỉ đọc kết quả có sẵn): python src/viz.py configs/cape_town.yaml
+Hình 6 (LLM so với baseline) do evaluate.py vẽ bằng fig6_llm_vs_baseline() ở đây, sau khi có eval_metrics.csv:
+pipeline chạy viz trước evaluate nên lỗi ở nhãn tay không chặn 5 hình KPI."""
 import textwrap
 import matplotlib
 import numpy as np
 import pandas as pd
-import yaml
-from download import ROOT
+from common import PROC as P, ROOT, run
+from kpi import price_snapshots, scored_reviews
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-P, FIG = ROOT / "data" / "processed", ROOT / "figures"
+FIG = ROOT / "figures"
 BG, INK, INK2, GRID, MUTED, DASH = "#fcfcfb", "#0b0b0b", "#52514e", "#e4e3df", "#b9b8b2", (0, (3, 2))
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]  # A01..A08, cố định
 SEQ = matplotlib.colors.LinearSegmentedColormap.from_list("b", ["#cde2fb", "#86b6ef", "#3987e5", "#256abf", "#184f95", "#0d366b"])
@@ -60,10 +61,8 @@ def lines(cfg, d, title, ylabel, caption):  # KPI 2, 3: đường liền qua cá
 
 def fig4_net_sentiment(cfg):
     d, tot = kpi("net_sentiment").sort_values("value", ascending=False), kpi("net_sentiment", "all").iloc[0]["value"]
-    area = pd.read_csv(P / "listings_clean.csv", dtype=str).drop_duplicates("id", keep="last").set_index("id")["analysis_area"]
-    z = pd.read_csv(P / "llm_results.csv", dtype=str).query("status == 'ok'").merge(pd.read_csv(  # cùng phép nối như kpi.py
-        P / "reviews_clean.csv", usecols=["id", "listing_id"], dtype=str), left_on="review_id", right_on="id")
-    comp = (pd.crosstab(z["listing_id"].map(area), z["sentiment"], normalize="index").reindex(d["group"]).fillna(0) * 100
+    z = scored_reviews(pd.read_csv(P / "listings_clean.csv", dtype={"snapshot": str}))  # cùng phép nối và bộ lọc như kpi.py
+    comp = (pd.crosstab(z["analysis_area"], z["sentiment"], normalize="index").reindex(d["group"]).fillna(0) * 100
             ).reindex(columns=list(SENT), fill_value=0)
     f, (a1, a2) = plt.subplots(1, 2, figsize=(10.5, 4.6), gridspec_kw={"width_ratios": [1.35, 1]}, sharey=True)
     y, left = np.arange(len(d)), np.zeros(len(d))
@@ -80,7 +79,7 @@ def fig4_net_sentiment(cfg):
     [note(a2, f"{v:.0f}% neg", (100, i), 4, va="center") for i, v in enumerate(comp["negative"])]
     a2.set(xlim=(0, 112), xticks=range(0, 101, 20), xlabel="Tỉ lệ review (%)", title="Thành phần nhãn LLM")
     a2.grid(axis="y", visible=False), a2.legend(loc="upper center", bbox_to_anchor=(0.45, -0.14), ncols=3)
-    return f, ("positive = +1, mixed = 0, negative = −1; trung bình trên review LLM gán nhãn thành công. Thanh ngang = "
+    return f, ("positive = +1, mixed = 0, negative = −1; trung bình trên review LLM gán nhãn thành công, không tính review tự động. Thanh ngang = "
                f"khoảng tin cậy 95% (bootstrap {cfg['eval']['bootstrap']} lần, lấy mẫu lại theo listing).\n"
                "Các khoảng chồng nhau nhiều: mẫu chưa đủ để xếp hạng chắc chắn mọi vùng.")
 
@@ -93,10 +92,12 @@ def tag(p, o):  # nhãn nguồn doanh thu theo độ lệch % của giá (p) và
 
 def fig5_revenue_drivers(cfg):
     L = pd.read_csv(P / "listings_clean.csv", dtype={"snapshot": str}).query("estimated_occupancy_l365d > 0")
-    snaps = [str(s) for s in cfg["snapshots"] if L.loc[L["snapshot"] == str(s), "price"].notna().any()]  # bỏ mốc không có giá
+    usable = price_snapshots(pd.read_csv(P / "listings_clean.csv", dtype={"snapshot": str}), cfg)  # cùng quy tắc chọn mốc như kpi.py
+    snaps, dropped = [str(s) for s in cfg["snapshots"] if str(s) in usable], [str(s) for s in cfg["snapshots"] if str(s) not in usable]
     rev = kpi("median_revenue")
     order = rev[rev["snapshot"] == snaps[-1]].sort_values("value", ascending=False)["group"].tolist()  # doanh thu cao ở trên
-    f, axs = plt.subplots(1, len(snaps), figsize=(12, 5.4), sharey=True)
+    f, axs = plt.subplots(1, len(snaps), figsize=(12, 5.4), sharey=True, squeeze=False)
+    axs = axs[0]
     tags = []  # nhãn của từng vùng ở từng mốc, để lấy nhãn chung theo đa số
     for ax, snap in zip(axs, snaps):
         d = L[L["snapshot"] == snap]
@@ -123,8 +124,9 @@ def fig5_revenue_drivers(cfg):
     mid = L[L["snapshot"] == snaps[-1]]
     return f, ("Chỉ tính listing có estimated_occupancy_l365d > 0; mức chung mốc "
                f"{snaps[-1]}: {mid['price'].median():,.0f} {cfg['currency']}/đêm và {mid['estimated_occupancy_l365d'].median():.0f} đêm/năm. "
-               "Vùng xếp theo doanh thu trung vị (KPI 3) mốc cuối, cao nhất ở trên. Mốc 12/2025 không có giá nên không so được. "
-               "Nhãn bên phải: ở mỗi mốc, cột lệch quá ±10% mới tính là cao hoặc thấp; nhãn chung là nhãn "
+               "Vùng xếp theo doanh thu trung vị (KPI 3) mốc cuối, cao nhất ở trên. "
+               + (f"Mốc {', '.join(dropped)} có dưới {cfg['kpi']['min_price_coverage']:.0%} listing có giá nên không so được. " if dropped else "")
+               + "Nhãn bên phải: ở mỗi mốc, cột lệch quá ±10% mới tính là cao hoặc thấp; nhãn chung là nhãn "
                f"xuất hiện ở đa số mốc, kèm số mốc (vd 2/{len(snaps)}); không có đa số thì ghi \"không ổn định\".")
 
 
@@ -139,27 +141,40 @@ def fig6_llm_vs_baseline(cfg):
     ax.set(xlim=(0, 1.02), xlabel="Điểm trên nhãn tay (chấm = ước lượng, vạch = khoảng tin cậy 95% bootstrap)",
            title=f"Gán nhãn cảm xúc so với {int(raw.loc[raw['metric'] == 'accuracy', 'n'].max())} nhãn tay")
     ax.legend(loc="lower right", bbox_to_anchor=(1, 1), ncols=2)
-    return f, "Nhãn tay 97% positive nên macro-F1 chỉ dựa vào 3 review không phải positive; khoảng tin cậy rất rộng."
+    lab = pd.read_csv(P / "eval_confusion.csv").query("method == 'llm'").groupby("label")["count"].sum()
+    top, n = lab.idxmax(), int(lab.sum())
+    return f, (f"Nhãn tay {lab[top] / n:.0%} {top} nên macro-F1 chỉ dựa vào {n - int(lab[top])} review không phải {top}; "
+               "khoảng tin cậy rất rộng.")
 
-FIGS = {fn.__name__: fn for fn in (fig1_hibernation_heatmap, fig4_net_sentiment, fig5_revenue_drivers,
-                                   fig6_llm_vs_baseline)} | {"fig2_median_price": lambda cfg: lines(
-    cfg, kpi("median_price").query("room_type == 'all'"), "KPI 2. Giá trung vị theo vùng (mọi loại phòng)", f"Giá trung vị "
-    f"({cfg['currency']}/đêm)", "Trung vị price khác rỗng. Mốc 03 là cuối mùa hè ở Cape Town nên giá cao hơn; "
-    "kpi_median_price.csv có thêm số liệu theo từng loại phòng."), "fig3_median_revenue": lambda cfg: lines(
+FIGS = {"fig1_hibernation_heatmap": fig1_hibernation_heatmap, "fig2_median_price": lambda cfg: lines(
+    cfg, kpi("median_price").query("room_type == 'all'"), "KPI 2. Giá trung vị theo vùng (mọi loại phòng gộp lại)",
+    f"Giá trung vị ({cfg['currency']}/đêm)", "Trung vị price khác rỗng, tính trên mọi loại phòng gộp lại. "
+    "Mốc 03 là cuối mùa hè ở Cape Town nên giá cao hơn."), "fig3_median_revenue": lambda cfg: lines(
     cfg, kpi("median_revenue"), "KPI 3. Doanh thu ước tính trung vị mỗi listing mỗi năm", f"Doanh thu trung vị ({cfg['currency']}"
-    "/năm)", "Trung vị estimated_revenue_l365d (ước tính của Inside Airbnb), tính cả listing doanh thu 0.")}
+    "/năm)", "Trung vị estimated_revenue_l365d (ước tính của Inside Airbnb), tính cả listing doanh thu 0."),
+    "fig4_net_sentiment": fig4_net_sentiment, "fig5_revenue_drivers": fig5_revenue_drivers}
+EVAL_FIG = "fig6_llm_vs_baseline"  # do evaluate.py vẽ
 
-def main(config_path):
-    cfg = yaml.safe_load(open(config_path, encoding="utf-8"))
-    FIG.mkdir(exist_ok=True), [p.unlink() for p in FIG.glob("fig*.png") if p.stem not in FIGS]  # bỏ hình cũ không còn sinh ra
-    src = (f"Nguồn: Inside Airbnb (CC BY 4.0), Cape Town, mốc {cfg['snapshots'][0]} đến {cfg['snapshots'][-1]}; "
-           f"mẫu 1000 listing của nhóm {cfg['group_code']}.")
+
+def save(cfg, name, fn):
+    """Vẽ một hình, thêm chú thích + nguồn dữ liệu ở chân hình, lưu figures/<name>.png."""
+    FIG.mkdir(exist_ok=True)
+    n = pd.read_csv(P / "listings_clean.csv", usecols=["id"])["id"].nunique()
+    src = (f"Nguồn: Inside Airbnb (CC BY 4.0), {cfg['city'].replace('_', ' ').title()}, mốc {cfg['snapshots'][0]} đến "
+           f"{cfg['snapshots'][-1]}; mẫu {n} listing của nhóm {cfg['group_code']}.")
+    f, caption = fn(cfg)
+    text = "\n".join(textwrap.fill(t, int(f.get_figwidth() * 19)) for t in f"{caption}\n{src}".split("\n"))
+    f.text(0.01, 0.01, text, fontsize=6.8, va="bottom", color=INK2)
+    f.tight_layout(rect=(0, ((text.count("\n") + 1) * 0.135 + 0.05) / f.get_figheight(), 1, 1))
+    f.savefig(FIG / f"{name}.png", dpi=200), plt.close(f), print(f"[ok]   figures/{name}.png")
+
+
+def main(cfg):
+    FIG.mkdir(exist_ok=True)
+    [p.unlink() for p in FIG.glob("fig*.png") if p.stem not in {*FIGS, EVAL_FIG}]  # bỏ hình cũ không còn sinh ra
     for name, fn in FIGS.items():
-        f, caption = fn(cfg)
-        text = "\n".join(textwrap.fill(t, int(f.get_figwidth() * 19)) for t in f"{caption}\n{src}".split("\n"))
-        f.text(0.01, 0.01, text, fontsize=6.8, va="bottom", color=INK2)
-        f.tight_layout(rect=(0, ((text.count("\n") + 1) * 0.135 + 0.05) / f.get_figheight(), 1, 1))
-        f.savefig(FIG / f"{name}.png", dpi=200), plt.close(f), print(f"[ok]   figures/{name}.png")
+        save(cfg, name, fn)
+
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "configs/cape_town.yaml")
+    run(main)
