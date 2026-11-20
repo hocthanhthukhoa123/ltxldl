@@ -1,10 +1,12 @@
 """Vẽ 5 hình KPI vào figures/ (chỉ đọc kết quả có sẵn): python src/viz.py configs/cape_town.yaml
 Hình 6 (LLM so với baseline) do evaluate.py vẽ bằng fig6_llm_vs_baseline() ở đây, sau khi có eval_metrics.csv:
 pipeline chạy viz trước evaluate nên lỗi ở nhãn tay không chặn 5 hình KPI."""
+import io
 import textwrap
 import matplotlib
 import numpy as np
 import pandas as pd
+from PIL import Image  # có sẵn: matplotlib phụ thuộc Pillow
 from common import PROC as P, ROOT, run
 from kpi import price_snapshots, scored_reviews
 matplotlib.use("Agg")
@@ -156,6 +158,15 @@ FIGS = {"fig1_hibernation_heatmap": fig1_hibernation_heatmap, "fig2_median_price
 EVAL_FIG = "fig6_llm_vs_baseline"  # do evaluate.py vẽ
 
 
+def same_pixels(path, buf):
+    """Hai ảnh PNG giống nhau từng điểm ảnh (cùng kích thước, cùng giá trị RGBA) hay không."""
+    try:
+        a, b = (np.asarray(Image.open(x).convert("RGBA")) for x in (path, io.BytesIO(buf.getvalue())))
+    except OSError:  # tệp cũ hỏng: vẽ lại
+        return False
+    return a.shape == b.shape and np.array_equal(a, b)
+
+
 def save(cfg, name, fn):
     """Vẽ một hình, thêm chú thích + nguồn dữ liệu ở chân hình, lưu figures/<name>.png."""
     FIG.mkdir(exist_ok=True)
@@ -166,7 +177,12 @@ def save(cfg, name, fn):
     text = "\n".join(textwrap.fill(t, int(f.get_figwidth() * 19)) for t in f"{caption}\n{src}".split("\n"))
     f.text(0.01, 0.01, text, fontsize=6.8, va="bottom", color=INK2)
     f.tight_layout(rect=(0, ((text.count("\n") + 1) * 0.135 + 0.05) / f.get_figheight(), 1, 1))
-    f.savefig(FIG / f"{name}.png", dpi=200), plt.close(f), print(f"[ok]   figures/{name}.png")
+    buf, out = io.BytesIO(), FIG / f"{name}.png"
+    f.savefig(buf, format="png", dpi=200), plt.close(f)
+    if out.exists() and same_pixels(out, buf):  # hình không đổi: giữ tệp cũ (byte PNG có thể khác giữa macOS/Linux do zlib)
+        print(f"[same] figures/{name}.png")
+    else:
+        out.write_bytes(buf.getvalue()), print(f"[ok]   figures/{name}.png")
 
 
 def main(cfg):

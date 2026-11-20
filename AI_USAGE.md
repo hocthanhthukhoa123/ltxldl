@@ -128,6 +128,7 @@ keep the code as short as under 50 lines
 - `src/qa.py`: mốc thiếu cột thì thêm cột rỗng (`reindex`) thay vì lỗi. Giữ khảo sát calendar, cờ ngoại lai theo mốc × loại phòng, sắp xếp ổn định.
 - `src/viz.py`, `src/evaluate.py`: `viz` vẽ 5 hình KPI; `evaluate` vẽ hình 6 sau khi có số đo, nên lỗi nhãn tay không chặn hình KPI. Chú thích hình 5 và 6 tính từ dữ liệu thay vì ghi cứng ("mốc 12/2025", "97% positive"). Giữ bootstrap macro-F1 cố định danh sách lớp và hỗ trợ người gán thứ hai.
 - `.python-version`: `3.12.3` (dạng 3.x.y, đúng bản đã chạy kiểm thử).
+- `src/viz.py` (sau khi chạy thử trên macOS): chạy lại trên Mac làm 6 tệp PNG khác byte so với bản sinh trên Linux dù nội dung hình không đổi, nên `git status` không sạch. Đã sửa: trước khi ghi, so từng điểm ảnh với tệp cũ; giống hệt thì giữ tệp cũ.
 
 **AI sai ở đâu (ví dụ thật):**
 - Khi sửa chú thích hình 5 cho khỏi ghi cứng mốc, Claude ghép chuỗi bị thừa một dấu nháy làm `viz.py` lỗi cú pháp; phát hiện ngay khi đọc lại đoạn code trước khi chạy và sửa.
